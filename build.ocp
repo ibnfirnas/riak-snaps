@@ -1,0 +1,24 @@
+sort   = true
+has_byte = false
+has_asm  = true
+cflags = "-w +A"
+
+begin library "process"
+    requires = [ "unix" ]
+    files    = [
+        "src/process/process.mli"
+        "src/process/process.ml"
+    ]
+end
+
+begin program "riak-snaps"
+    requires = [
+        "process"
+        "str"
+        "ezjsonm"
+    ]
+    files    = [
+        "src/riak_snaps/riak_snaps_main.mli"
+        "src/riak_snaps/riak_snaps_main.ml"
+    ]
+end
