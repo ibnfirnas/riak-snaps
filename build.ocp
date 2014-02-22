@@ -1,0 +1,11 @@
+sort   = true
+cflags = "-w +A"
+
+begin program "riak-snaps"
+    has_byte = false
+    has_asm  = true
+    files    = [
+        "src/riak_snaps/riak_snaps_main.mli"
+        "src/riak_snaps/riak_snaps_main.ml"
+    ]
+end

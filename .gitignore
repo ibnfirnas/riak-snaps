@@ -1,1 +1,4 @@
+_obuild/
+bin/
 data/
+ocp-build.root*
