@@ -14,6 +14,8 @@ end
 begin program "riak-snaps"
     requires = [
         "process"
+        "str"
+        "ezjsonm"
     ]
     files    = [
         "src/riak_snaps/riak_snaps_main.mli"
