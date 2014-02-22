@@ -1,2 +1,2 @@
-riak-snapshot
-=============
+riak-snaps
+==========
