@@ -67,9 +67,9 @@ module Git :
                 | Modified
 
     val init   : unit   -> unit
-    val add    : string -> unit
-    val status : string -> status
-    val commit : string -> unit
+    val add    : filepath:string -> unit
+    val status : filepath:string -> status
+    val commit : msg:string -> unit
   end
   =
   struct
@@ -80,10 +80,10 @@ module Git :
     let init () =
       Cmd.exe ~prog:"git" ~args:["init"]
 
-    let add filepath =
+    let add ~filepath =
       Cmd.exe ~prog:"git" ~args:["add"; filepath]
 
-    let status filepath =
+    let status ~filepath =
       match Cmd.out ~prog:"git" ~args:["status"; "--porcelain"; filepath] with
       | ""                                   -> Unchanged
       | s when (s = "A  " ^ filepath ^ "\n") -> Added
@@ -91,7 +91,7 @@ module Git :
       | s                                    -> assert false
       (* TODO: Handle other status codes. *)
 
-    let commit msg =
+    let commit ~msg =
       Cmd.exe ~prog:"git" ~args:["commit"; "-m"; msg]
   end
 
@@ -130,11 +130,11 @@ module SnapsDB :
       let oc = open_out filepath in
       output_string oc value;
       close_out oc;
-      Git.add filepath;
-      match Git.status filepath with
+      Git.add ~filepath;
+      match Git.status ~filepath with
       | Git.Added | Git.Modified ->
           eprintf "Committing %S. Status was Added or Modified.\n%!" filepath;
-          Git.commit (sprintf "'Update %s'" filepath)
+          Git.commit ~msg:(sprintf "'Update %s'" filepath)
       | Git.Unchanged ->
           eprintf "Not committing %S. Status was Unchanged.\n%!" filepath
   end
