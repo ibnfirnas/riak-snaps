@@ -1,10 +1,9 @@
 open Printf
+open Riak_snaps_pervasives
 
 module String = StringLabels
 
 let port = 8098
-
-let (|-) f g x = g (f x)
 
 let cmd_out ~prog ~args =
   match Process.create ~prog ~args with

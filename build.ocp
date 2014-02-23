@@ -20,5 +20,7 @@ begin program "riak-snaps"
     files    = [
         "src/riak_snaps/riak_snaps_main.mli"
         "src/riak_snaps/riak_snaps_main.ml"
+        "src/riak_snaps/riak_snaps_pervasives.mli"
+        "src/riak_snaps/riak_snaps_pervasives.ml"
     ]
 end
