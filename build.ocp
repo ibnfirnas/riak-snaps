@@ -1,7 +1,7 @@
-sort   = true
+sort     = true
 has_byte = false
 has_asm  = true
-cflags = "-w +A"
+cflags   = "-w +A"
 
 begin library "process"
     requires = [ "unix" ]
