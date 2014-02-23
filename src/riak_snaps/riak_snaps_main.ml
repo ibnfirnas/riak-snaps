@@ -57,7 +57,7 @@ let object_store ~bucket (key, value) =
   match status with
   | s when (s = ("M  " ^ path ^ "\n")) || (s = ("A  " ^ path ^ "\n")) ->
       eprintf "Committing %S. Status was: %S\n%!" path s;
-      sys_do ~prog:"git" ~args:["commit"; "-m"; sprintf "'Update %s'" key]
+      sys_do ~prog:"git" ~args:["commit"; "-m"; sprintf "'Update %s'" path]
   | s ->
       eprintf "Not committing %S. Status was: %S\n%!" path s
 
