@@ -66,10 +66,10 @@ module Git :
                 | Added
                 | Modified
 
-    val init   : unit   -> unit
+    val init   :            unit -> unit
     val add    : filepath:string -> unit
     val status : filepath:string -> status
-    val commit : msg:string -> unit
+    val commit :      msg:string -> unit
   end
   =
   struct
