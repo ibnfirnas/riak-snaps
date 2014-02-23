@@ -26,13 +26,13 @@ let cmd_out ~prog ~args =
 let cmd_do ~prog ~args =
   ignore (cmd_out ~prog ~args)
 
-let riak_get_keys ~hostname ~bucket =
+let riak_fetch_keys ~hostname ~bucket =
   let uri = sprintf "http://%s:%d/riak/%s?keys=true" hostname port bucket in
   let data = cmd_out ~prog:"curl" ~args:[uri] in
   let json = Ezjsonm.from_string data in
   Ezjsonm.(get_list get_string (find json ["keys"]))
 
-let riak_get_value ~hostname ~bucket key =
+let riak_fetch_value ~hostname ~bucket key =
   let uri = sprintf "http://%s:%d/riak/%s/%s" hostname port bucket key in
   let value = cmd_out ~prog:"curl" ~args:[uri] in
   key, value
@@ -65,5 +65,5 @@ let () =
   Sys.chdir repo_path;
   git_init ();
   List.iter
-    (riak_get_value ~hostname ~bucket |- object_store ~bucket)
-    (riak_get_keys ~hostname ~bucket)
+    (riak_fetch_value ~hostname ~bucket |- object_store ~bucket)
+    (riak_fetch_keys ~hostname ~bucket)
