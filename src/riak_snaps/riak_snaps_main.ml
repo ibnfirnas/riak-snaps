@@ -6,9 +6,6 @@ let port = 8098
 
 let (|-) f g x = g (f x)
 
-let last_line str =
-  List.hd (List.rev (Str.split (Str.regexp "\n+") str))
-
 let cmd_out ~prog ~args =
   match Process.create ~prog ~args with
   | `Error Process.Invalid_prog -> assert false
@@ -31,15 +28,14 @@ let cmd_do ~prog ~args =
 
 let riak_get_keys ~hostname ~bucket =
   let uri = sprintf "http://%s:%d/riak/%s?keys=true" hostname port bucket in
-  let data = cmd_out ~prog:"curl" ~args:["-i"; uri] in
-  let body = last_line data in
-  let json = Ezjsonm.from_string body in
+  let data = cmd_out ~prog:"curl" ~args:[uri] in
+  let json = Ezjsonm.from_string data in
   Ezjsonm.(get_list get_string (find json ["keys"]))
 
 let riak_get_value ~hostname ~bucket key =
   let uri = sprintf "http://%s:%d/riak/%s/%s" hostname port bucket key in
-  let data = cmd_out ~prog:"curl" ~args:["-i"; uri] in
-  key, (last_line data)
+  let value = cmd_out ~prog:"curl" ~args:[uri] in
+  key, value
 
 let git_init () =
   cmd_do ~prog:"git" ~args:["init"]
