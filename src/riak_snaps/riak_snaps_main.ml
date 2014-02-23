@@ -60,6 +60,41 @@ module Riak :
       key, value
   end
 
+module Git :
+  sig
+    type status = Unchanged
+                | Added
+                | Modified
+
+    val init   : unit   -> unit
+    val add    : string -> unit
+    val status : string -> status
+    val commit : string -> unit
+  end
+  =
+  struct
+    type status = Unchanged
+                | Added
+                | Modified
+
+    let init () =
+      Cmd.exe ~prog:"git" ~args:["init"]
+
+    let add filepath =
+      Cmd.exe ~prog:"git" ~args:["add"; filepath]
+
+    let status filepath =
+      match Cmd.out ~prog:"git" ~args:["status"; "--porcelain"; filepath] with
+      | ""                                   -> Unchanged
+      | s when (s = "A  " ^ filepath ^ "\n") -> Added
+      | s when (s = "M  " ^ filepath ^ "\n") -> Modified
+      | s                                    -> assert false
+      (* TODO: Handle other status codes. *)
+
+    let commit msg =
+      Cmd.exe ~prog:"git" ~args:["commit"; "-m"; msg]
+  end
+
 module SnapsDB :
   sig
     type t
@@ -84,7 +119,7 @@ module SnapsDB :
     let create ~path =
       mkdir path;
       Sys.chdir path;
-      Cmd.exe ~prog:"git" ~args:["init"];
+      Git.init ();
       { path = Sys.getcwd ()  (* Remember the absolute path *)
       }
 
@@ -95,14 +130,13 @@ module SnapsDB :
       let oc = open_out filepath in
       output_string oc value;
       close_out oc;
-      Cmd.exe ~prog:"git" ~args:["add"; filepath];
-      let status = Cmd.out ~prog:"git" ~args:["status"; "--porcelain"; filepath] in
-      match status with
-      | s when (s = "M  " ^ filepath ^ "\n") || (s = "A  " ^ filepath ^ "\n") ->
-          eprintf "Committing %S. Status was: %S\n%!" filepath s;
-          Cmd.exe ~prog:"git" ~args:["commit"; "-m"; sprintf "'Update %s'" filepath]
-      | s ->
-          eprintf "Not committing %S. Status was: %S\n%!" filepath s
+      Git.add filepath;
+      match Git.status filepath with
+      | Git.Added | Git.Modified ->
+          eprintf "Committing %S. Status was Added or Modified.\n%!" filepath;
+          Git.commit (sprintf "'Update %s'" filepath)
+      | Git.Unchanged ->
+          eprintf "Not committing %S. Status was Unchanged.\n%!" filepath
   end
 
 let () =
