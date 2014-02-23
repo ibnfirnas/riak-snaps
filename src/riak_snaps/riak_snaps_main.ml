@@ -62,30 +62,47 @@ module Riak :
 
 module SnapsDB :
   sig
-    val init : unit -> unit
+    type t
+
+    val create : path:string -> t
+
     val put
-       : bucket:string
+       : t
+      -> bucket:string
       -> string * string  (* Key/Value pair. Unlabled for partial application. *)
       -> unit
   end
   =
   struct
-    let init () =
-      Cmd.exe ~prog:"git" ~args:["init"]
+    type t =
+      { path : string
+      }
 
-    let put ~bucket (key, value) =
-      let path = bucket ^ "/" ^ key in
-      let oc = open_out path in
+    let mkdir path =
+      Cmd.exe ~prog:"mkdir" ~args:["-p"; path]
+
+    let create ~path =
+      mkdir path;
+      Sys.chdir path;
+      Cmd.exe ~prog:"git" ~args:["init"];
+      { path = Sys.getcwd ()  (* Remember the absolute path *)
+      }
+
+    let put {path} ~bucket (key, value) =
+      Sys.chdir path;
+      mkdir bucket;
+      let filepath = bucket ^ "/" ^ key in
+      let oc = open_out filepath in
       output_string oc value;
       close_out oc;
-      Cmd.exe ~prog:"git" ~args:["add"; path];
-      let status = Cmd.out ~prog:"git" ~args:["status"; "--porcelain"; path] in
+      Cmd.exe ~prog:"git" ~args:["add"; filepath];
+      let status = Cmd.out ~prog:"git" ~args:["status"; "--porcelain"; filepath] in
       match status with
-      | s when (s = "M  " ^ path ^ "\n") || (s = "A  " ^ path ^ "\n") ->
-          eprintf "Committing %S. Status was: %S\n%!" path s;
-          Cmd.exe ~prog:"git" ~args:["commit"; "-m"; sprintf "'Update %s'" path]
+      | s when (s = "M  " ^ filepath ^ "\n") || (s = "A  " ^ filepath ^ "\n") ->
+          eprintf "Committing %S. Status was: %S\n%!" filepath s;
+          Cmd.exe ~prog:"git" ~args:["commit"; "-m"; sprintf "'Update %s'" filepath]
       | s ->
-          eprintf "Not committing %S. Status was: %S\n%!" path s
+          eprintf "Not committing %S. Status was: %S\n%!" filepath s
   end
 
 let () =
@@ -96,9 +113,7 @@ let () =
       eprintf "USAGE: %s repo_path hostname bucket\n%!" Sys.argv.(0);
       exit 1
   in
-  Cmd.exe ~prog:"mkdir" ~args:["-p"; (repo_path ^ "/" ^ bucket)];
-  Sys.chdir repo_path;
-  SnapsDB.init ();
+  let db = SnapsDB.create ~path:repo_path in
   List.iter
-    (Riak.fetch_value ~hostname ~bucket |- SnapsDB.put ~bucket)
+    (Riak.fetch_value ~hostname ~bucket |- SnapsDB.put db ~bucket)
     (Riak.fetch_keys ~hostname ~bucket)
