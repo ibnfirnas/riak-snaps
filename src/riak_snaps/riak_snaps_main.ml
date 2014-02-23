@@ -48,11 +48,18 @@ let mkdir path =
   sys_do ~prog:"mkdir" ~args:["-p"; path]
 
 let object_store ~bucket (key, value) =
-  let oc = open_out (bucket ^ "/" ^ key) in
+  let path = bucket ^ "/" ^ key in
+  let oc = open_out path in
   output_string oc value;
   close_out oc;
-  sys_do ~prog:"git" ~args:["add"   ; "."];
-  sys_do ~prog:"git" ~args:["commit"; "-m"; sprintf "'Update %s'" key]
+  sys_do ~prog:"git" ~args:["add"   ; path];
+  let status = sys_out ~prog:"git" ~args:["status"; "--porcelain"; path] in
+  match status with
+  | s when (s = ("M  " ^ path ^ "\n")) || (s = ("A  " ^ path ^ "\n")) ->
+      eprintf "Committing %S. Status was: %S\n%!" path s;
+      sys_do ~prog:"git" ~args:["commit"; "-m"; sprintf "'Update %s'" key]
+  | s ->
+      eprintf "Not committing %S. Status was: %S\n%!" path s
 
 let () =
   let repo_path = Sys.argv.(1) in
