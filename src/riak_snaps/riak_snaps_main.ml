@@ -89,9 +89,13 @@ module SnapsDB :
   end
 
 let () =
-  let repo_path = Sys.argv.(1) in
-  let hostname  = Sys.argv.(2) in
-  let bucket    = Sys.argv.(3) in
+  let repo_path, hostname, bucket =
+    try
+      Sys.argv.(1), Sys.argv.(2), Sys.argv.(3)
+    with Invalid_argument "index out of bounds" ->
+      eprintf "USAGE: %s repo_path hostname bucket\n%!" Sys.argv.(0);
+      exit 1
+  in
   Cmd.exe ~prog:"mkdir" ~args:["-p"; (repo_path ^ "/" ^ bucket)];
   Sys.chdir repo_path;
   SnapsDB.init ();
