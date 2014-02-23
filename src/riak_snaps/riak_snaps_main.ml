@@ -55,7 +55,7 @@ let object_store ~bucket (key, value) =
   cmd_do ~prog:"git" ~args:["add"   ; path];
   let status = cmd_out ~prog:"git" ~args:["status"; "--porcelain"; path] in
   match status with
-  | s when (s = ("M  " ^ path ^ "\n")) || (s = ("A  " ^ path ^ "\n")) ->
+  | s when (s = "M  " ^ path ^ "\n") || (s = "A  " ^ path ^ "\n") ->
       eprintf "Committing %S. Status was: %S\n%!" path s;
       cmd_do ~prog:"git" ~args:["commit"; "-m"; sprintf "'Update %s'" path]
   | s ->
