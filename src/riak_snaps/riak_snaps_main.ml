@@ -3,66 +3,98 @@ open Riak_snaps_pervasives
 
 module String = StringLabels
 
-let port = 8098
+module Cmd :
+  sig
+    val out : prog:string -> args:string list -> string
+    val exe : prog:string -> args:string list -> unit
+  end
+  =
+  struct
+    let out ~prog ~args =
+      match Process.create ~prog ~args with
+      | `Error Process.Invalid_prog -> assert false
+      | `Ok proc ->
+        begin match Process.wait proc with
+        | `Ok out  -> out
+        | `Error (Process.Signal _) -> assert false
+        | `Error (Process.Stop   _) -> assert false
+        | `Error (Process.Fail (code, reason)) ->
+            eprintf "~~~ FAILURE ~~~\n%!";
+            eprintf "Program   : %s\n%!" prog;
+            eprintf "Arguments : %s\n%!" (String.concat args ~sep:" ");
+            eprintf "Exit code : %d\n%!" code;
+            eprintf "Reason    : %s\n%!" reason;
+            exit code
+        end
 
-let cmd_out ~prog ~args =
-  match Process.create ~prog ~args with
-  | `Error Process.Invalid_prog -> assert false
-  | `Ok proc ->
-    begin match Process.wait proc with
-    | `Ok out  -> out
-    | `Error (Process.Signal _) -> assert false
-    | `Error (Process.Stop   _) -> assert false
-    | `Error (Process.Fail (code, reason)) ->
-        eprintf "~~~ FAILURE ~~~\n%!";
-        eprintf "Program   : %s\n%!" prog;
-        eprintf "Arguments : %s\n%!" (String.concat args ~sep:" ");
-        eprintf "Exit code : %d\n%!" code;
-        eprintf "Reason    : %s\n%!" reason;
-        exit code
-    end
+    let exe ~prog ~args =
+      ignore (out ~prog ~args)
+  end
 
-let cmd_do ~prog ~args =
-  ignore (cmd_out ~prog ~args)
+module Riak :
+  sig
+    val fetch_keys
+       : hostname:string
+      -> bucket:string
+      -> string list
 
-let riak_fetch_keys ~hostname ~bucket =
-  let uri = sprintf "http://%s:%d/riak/%s?keys=true" hostname port bucket in
-  let data = cmd_out ~prog:"curl" ~args:[uri] in
-  let json = Ezjsonm.from_string data in
-  Ezjsonm.(get_list get_string (find json ["keys"]))
+    val fetch_value
+       : hostname:string
+      -> bucket:string
+      -> string  (* Key. Unlabled for partial application. *)
+      -> string * string
+  end
+  =
+  struct
+    let port = 8098
 
-let riak_fetch_value ~hostname ~bucket key =
-  let uri = sprintf "http://%s:%d/riak/%s/%s" hostname port bucket key in
-  let value = cmd_out ~prog:"curl" ~args:[uri] in
-  key, value
+    let fetch_keys ~hostname ~bucket =
+      let uri = sprintf "http://%s:%d/riak/%s?keys=true" hostname port bucket in
+      let data = Cmd.out ~prog:"curl" ~args:[uri] in
+      let json = Ezjsonm.from_string data in
+      Ezjsonm.(get_list get_string (find json ["keys"]))
 
-let git_init () =
-  cmd_do ~prog:"git" ~args:["init"]
+    let fetch_value ~hostname ~bucket key =
+      let uri = sprintf "http://%s:%d/riak/%s/%s" hostname port bucket key in
+      let value = Cmd.out ~prog:"curl" ~args:[uri] in
+      key, value
+  end
 
-let mkdir path =
-  cmd_do ~prog:"mkdir" ~args:["-p"; path]
+module SnapsDB :
+  sig
+    val init : unit -> unit
+    val put
+       : bucket:string
+      -> string * string  (* Key/Value pair. Unlabled for partial application. *)
+      -> unit
+  end
+  =
+  struct
+    let init () =
+      Cmd.exe ~prog:"git" ~args:["init"]
 
-let object_store ~bucket (key, value) =
-  let path = bucket ^ "/" ^ key in
-  let oc = open_out path in
-  output_string oc value;
-  close_out oc;
-  cmd_do ~prog:"git" ~args:["add"; path];
-  let status = cmd_out ~prog:"git" ~args:["status"; "--porcelain"; path] in
-  match status with
-  | s when (s = "M  " ^ path ^ "\n") || (s = "A  " ^ path ^ "\n") ->
-      eprintf "Committing %S. Status was: %S\n%!" path s;
-      cmd_do ~prog:"git" ~args:["commit"; "-m"; sprintf "'Update %s'" path]
-  | s ->
-      eprintf "Not committing %S. Status was: %S\n%!" path s
+    let put ~bucket (key, value) =
+      let path = bucket ^ "/" ^ key in
+      let oc = open_out path in
+      output_string oc value;
+      close_out oc;
+      Cmd.exe ~prog:"git" ~args:["add"; path];
+      let status = Cmd.out ~prog:"git" ~args:["status"; "--porcelain"; path] in
+      match status with
+      | s when (s = "M  " ^ path ^ "\n") || (s = "A  " ^ path ^ "\n") ->
+          eprintf "Committing %S. Status was: %S\n%!" path s;
+          Cmd.exe ~prog:"git" ~args:["commit"; "-m"; sprintf "'Update %s'" path]
+      | s ->
+          eprintf "Not committing %S. Status was: %S\n%!" path s
+  end
 
 let () =
   let repo_path = Sys.argv.(1) in
   let hostname  = Sys.argv.(2) in
   let bucket    = Sys.argv.(3) in
-  mkdir (repo_path ^ "/" ^ bucket);
+  Cmd.exe ~prog:"mkdir" ~args:["-p"; (repo_path ^ "/" ^ bucket)];
   Sys.chdir repo_path;
-  git_init ();
+  SnapsDB.init ();
   List.iter
-    (riak_fetch_value ~hostname ~bucket |- object_store ~bucket)
-    (riak_fetch_keys ~hostname ~bucket)
+    (Riak.fetch_value ~hostname ~bucket |- SnapsDB.put ~bucket)
+    (Riak.fetch_keys ~hostname ~bucket)
