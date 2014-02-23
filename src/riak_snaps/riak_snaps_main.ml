@@ -9,7 +9,7 @@ let (|-) f g x = g (f x)
 let last_line str =
   List.hd (List.rev (Str.split (Str.regexp "\n+") str))
 
-let sys_out ~prog ~args =
+let cmd_out ~prog ~args =
   match Process.create ~prog ~args with
   | `Error Process.Invalid_prog -> assert false
   | `Ok proc ->
@@ -26,38 +26,38 @@ let sys_out ~prog ~args =
         exit code
     end
 
-let sys_do ~prog ~args =
-  ignore (sys_out ~prog ~args)
+let cmd_do ~prog ~args =
+  ignore (cmd_out ~prog ~args)
 
 let riak_get_keys ~hostname ~bucket =
   let uri = sprintf "http://%s:%d/riak/%s?keys=true" hostname port bucket in
-  let data = sys_out ~prog:"curl" ~args:["-i"; uri] in
+  let data = cmd_out ~prog:"curl" ~args:["-i"; uri] in
   let body = last_line data in
   let json = Ezjsonm.from_string body in
   Ezjsonm.(get_list get_string (find json ["keys"]))
 
 let riak_get_value ~hostname ~bucket key =
   let uri = sprintf "http://%s:%d/riak/%s/%s" hostname port bucket key in
-  let data = sys_out ~prog:"curl" ~args:["-i"; uri] in
+  let data = cmd_out ~prog:"curl" ~args:["-i"; uri] in
   key, (last_line data)
 
 let git_init () =
-  sys_do ~prog:"git" ~args:["init"]
+  cmd_do ~prog:"git" ~args:["init"]
 
 let mkdir path =
-  sys_do ~prog:"mkdir" ~args:["-p"; path]
+  cmd_do ~prog:"mkdir" ~args:["-p"; path]
 
 let object_store ~bucket (key, value) =
   let path = bucket ^ "/" ^ key in
   let oc = open_out path in
   output_string oc value;
   close_out oc;
-  sys_do ~prog:"git" ~args:["add"   ; path];
-  let status = sys_out ~prog:"git" ~args:["status"; "--porcelain"; path] in
+  cmd_do ~prog:"git" ~args:["add"   ; path];
+  let status = cmd_out ~prog:"git" ~args:["status"; "--porcelain"; path] in
   match status with
   | s when (s = ("M  " ^ path ^ "\n")) || (s = ("A  " ^ path ^ "\n")) ->
       eprintf "Committing %S. Status was: %S\n%!" path s;
-      sys_do ~prog:"git" ~args:["commit"; "-m"; sprintf "'Update %s'" path]
+      cmd_do ~prog:"git" ~args:["commit"; "-m"; sprintf "'Update %s'" path]
   | s ->
       eprintf "Not committing %S. Status was: %S\n%!" path s
 
