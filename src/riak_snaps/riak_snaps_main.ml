@@ -52,7 +52,7 @@ let object_store ~bucket (key, value) =
   let oc = open_out path in
   output_string oc value;
   close_out oc;
-  cmd_do ~prog:"git" ~args:["add"   ; path];
+  cmd_do ~prog:"git" ~args:["add"; path];
   let status = cmd_out ~prog:"git" ~args:["status"; "--porcelain"; path] in
   match status with
   | s when (s = "M  " ^ path ^ "\n") || (s = "A  " ^ path ^ "\n") ->
