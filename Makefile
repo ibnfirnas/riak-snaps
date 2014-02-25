@@ -1,5 +1,5 @@
 PROGRAMS := \
-	riak-snaps
+	snaps
 
 DIR_BUILD := _obuild
 

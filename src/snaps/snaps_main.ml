@@ -1,5 +1,5 @@
 open Printf
-open Riak_snaps_pervasives
+open Snaps_pervasives
 
 module String = StringLabels
 

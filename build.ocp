@@ -11,16 +11,16 @@ begin library "process"
     ]
 end
 
-begin program "riak-snaps"
+begin program "snaps"
     requires = [
         "process"
         "str"
         "ezjsonm"
     ]
     files    = [
-        "src/riak_snaps/riak_snaps_main.mli"
-        "src/riak_snaps/riak_snaps_main.ml"
-        "src/riak_snaps/riak_snaps_pervasives.mli"
-        "src/riak_snaps/riak_snaps_pervasives.ml"
+        "src/snaps/snaps_main.mli"
+        "src/snaps/snaps_main.ml"
+        "src/snaps/snaps_pervasives.mli"
+        "src/snaps/snaps_pervasives.ml"
     ]
 end
