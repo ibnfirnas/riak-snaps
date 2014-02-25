@@ -100,13 +100,13 @@ module SnapsDB :
 
     let create ~path =
       mkdir path;
-      Sys.chdir path;
+      Shell.cd path;
       Git.init ();
-      { path = Sys.getcwd ()  (* Remember the absolute path *)
+      { path = Shell.pwd ()  (* Remember the absolute path *)
       }
 
     let put {path} ~bucket (key, value) =
-      Sys.chdir path;
+      Shell.cd path;
       mkdir bucket;
       let filepath = bucket ^ "/" ^ key in
       let oc = open_out filepath in

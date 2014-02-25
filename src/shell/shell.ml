@@ -17,3 +17,12 @@ let out ~prog ~args =
 
 let exe ~prog ~args =
   ignore (out ~prog ~args)
+
+let mkdir path =
+  exe ~prog:"mkdir" ~args:["-p"; path]
+
+let cd path =
+  Sys.chdir path
+
+let pwd () =
+  Sys.getcwd ()
