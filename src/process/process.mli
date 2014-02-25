@@ -14,3 +14,9 @@ type t
 val create : prog:string -> args:string list -> (t, argument_error) result
 
 val wait : t -> (string, process_error) result
+
+val execute
+   : prog:string
+  -> args:string list
+  -> (string, [ `Create of argument_error | `Wait of process_error ]) result
+(** Shortcut for: [create] followed by [wait]. *)

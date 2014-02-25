@@ -60,3 +60,11 @@ let create ~prog ~args =
       }
     in
     `Ok t
+
+let execute ~prog ~args =
+  match create ~prog ~args with
+  | `Error e -> `Error (`Create e)
+  | `Ok    t ->
+    match wait t with
+    | `Error e    -> `Error (`Wait e)
+    | `Ok    data -> `Ok data
