@@ -1,33 +1,6 @@
 open Printf
 open Snaps_pervasives
 
-module String = StringLabels
-
-module Cmd :
-  sig
-    val out : prog:string -> args:string list -> string
-    val exe : prog:string -> args:string list -> unit
-  end
-  =
-  struct
-    let out ~prog ~args =
-      match Process.execute ~prog ~args with
-      | `Ok output                            -> output
-      | `Error (`Create Process.Invalid_prog) -> assert false
-      | `Error (`Wait  (Process.Signal _))    -> assert false
-      | `Error (`Wait  (Process.Stop   _))    -> assert false
-      | `Error (`Wait  (Process.Fail (code, reason))) ->
-          eprintf "~~~ FAILURE ~~~\n%!";
-          eprintf "Program   : %s\n%!" prog;
-          eprintf "Arguments : %s\n%!" (String.concat args ~sep:" ");
-          eprintf "Exit code : %d\n%!" code;
-          eprintf "Reason    : %s\n%!" reason;
-          exit code
-
-    let exe ~prog ~args =
-      ignore (out ~prog ~args)
-  end
-
 module Riak :
   sig
     type t
@@ -59,13 +32,13 @@ module Riak :
 
     let fetch_keys {hostname; port} ~bucket =
       let uri = sprintf "http://%s:%d/riak/%s?keys=true" hostname port bucket in
-      let data = Cmd.out ~prog:"curl" ~args:[uri] in
+      let data = Shell.out ~prog:"curl" ~args:[uri] in
       let json = Ezjsonm.from_string data in
       Ezjsonm.(get_list get_string (find json ["keys"]))
 
     let fetch_value {hostname; port} ~bucket key =
       let uri = sprintf "http://%s:%d/riak/%s/%s" hostname port bucket key in
-      let value = Cmd.out ~prog:"curl" ~args:[uri] in
+      let value = Shell.out ~prog:"curl" ~args:[uri] in
       key, value
   end
 
@@ -87,13 +60,13 @@ module Git :
                 | Modified
 
     let init () =
-      Cmd.exe ~prog:"git" ~args:["init"]
+      Shell.exe ~prog:"git" ~args:["init"]
 
     let add ~filepath =
-      Cmd.exe ~prog:"git" ~args:["add"; filepath]
+      Shell.exe ~prog:"git" ~args:["add"; filepath]
 
     let status ~filepath =
-      match Cmd.out ~prog:"git" ~args:["status"; "--porcelain"; filepath] with
+      match Shell.out ~prog:"git" ~args:["status"; "--porcelain"; filepath] with
       | ""                                   -> Unchanged
       | s when (s = "A  " ^ filepath ^ "\n") -> Added
       | s when (s = "M  " ^ filepath ^ "\n") -> Modified
@@ -101,7 +74,7 @@ module Git :
       (* TODO: Handle other status codes. *)
 
     let commit ~msg =
-      Cmd.exe ~prog:"git" ~args:["commit"; "-m"; msg]
+      Shell.exe ~prog:"git" ~args:["commit"; "-m"; msg]
   end
 
 module SnapsDB :
@@ -123,7 +96,7 @@ module SnapsDB :
       }
 
     let mkdir path =
-      Cmd.exe ~prog:"mkdir" ~args:["-p"; path]
+      Shell.exe ~prog:"mkdir" ~args:["-p"; path]
 
     let create ~path =
       mkdir path;

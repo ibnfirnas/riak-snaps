@@ -11,9 +11,17 @@ begin library "process"
     ]
 end
 
+begin library "shell"
+    requires = [ "process" ]
+    files    = [
+        "src/shell/shell.mli"
+        "src/shell/shell.ml"
+    ]
+end
+
 begin program "snaps"
     requires = [
-        "process"
+        "shell"
         "str"
         "ezjsonm"
     ]
