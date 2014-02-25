@@ -30,28 +30,40 @@ module Cmd :
 
 module Riak :
   sig
+    type t
+
+    val make : ?hostname:string -> ?port:int -> unit -> t
+
     val fetch_keys
-       : hostname:string
+       : t
       -> bucket:string
       -> string list
 
     val fetch_value
-       : hostname:string
+       : t
       -> bucket:string
       -> string  (* Key. Unlabled for partial application. *)
       -> string * string
   end
   =
   struct
-    let port = 8098
+    type t =
+      { hostname : string
+      ; port     : int
+      }
 
-    let fetch_keys ~hostname ~bucket =
+    let make ?(hostname="localhost") ?(port=8098) () =
+      { hostname
+      ; port
+      }
+
+    let fetch_keys {hostname; port} ~bucket =
       let uri = sprintf "http://%s:%d/riak/%s?keys=true" hostname port bucket in
       let data = Cmd.out ~prog:"curl" ~args:[uri] in
       let json = Ezjsonm.from_string data in
       Ezjsonm.(get_list get_string (find json ["keys"]))
 
-    let fetch_value ~hostname ~bucket key =
+    let fetch_value {hostname; port} ~bucket key =
       let uri = sprintf "http://%s:%d/riak/%s/%s" hostname port bucket key in
       let value = Cmd.out ~prog:"curl" ~args:[uri] in
       key, value
@@ -145,6 +157,7 @@ let () =
       exit 1
   in
   let db = SnapsDB.create ~path:repo_path in
+  let riak = Riak.make ~hostname () in
   List.iter
-    (Riak.fetch_value ~hostname ~bucket |- SnapsDB.put db ~bucket)
-    (Riak.fetch_keys ~hostname ~bucket)
+    (Riak.fetch_value riak ~bucket |- SnapsDB.put db ~bucket)
+    (Riak.fetch_keys  riak ~bucket)
