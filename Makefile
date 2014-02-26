@@ -4,8 +4,11 @@ PROGRAMS := \
 DIR_BUILD := _obuild
 
 
-# TODO: Test a cross-platform way of grabbing number of CPUs
-MAX_BUILD_WORKERS := $(shell sysctl -n hw.ncpu)
+MAX_BUILD_WORKERS := \
+	$(shell nproc             2> /dev/null \
+			 || gnproc            2> /dev/null \
+			 || sysctl -n hw.ncpu 2> /dev/null \
+	 )
 
 
 .PHONY:\
