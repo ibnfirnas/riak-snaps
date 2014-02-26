@@ -23,13 +23,10 @@ type t =
 let read_ic ~ic =
   let buffer = Buffer.create 32 in
   let rec read () =
-    try
-      Buffer.add_channel buffer ic 1;
-      read ()
-    with End_of_file ->
-      ()
+    Buffer.add_channel buffer ic 1;
+    read ()
   in
-  read ();
+  try read () with End_of_file -> ();
   Buffer.contents buffer
 
 let string_find ~str ~chr =
