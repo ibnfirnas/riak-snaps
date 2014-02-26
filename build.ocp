@@ -30,11 +30,20 @@ begin library "riak"
     ]
 end
 
+begin library "git"
+    requires = [ "shell" ]
+    files    = [
+        "src/git/git.mli"
+        "src/git/git.ml"
+    ]
+end
+
 begin program "snaps"
     requires = [
         "shell"
         "str"
         "riak"
+        "git"
     ]
     files    = [
         "src/snaps/snaps_main.mli"
