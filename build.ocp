@@ -19,11 +19,22 @@ begin library "shell"
     ]
 end
 
+begin library "riak"
+    requires = [
+        "shell"
+        "ezjsonm"
+    ]
+    files    = [
+        "src/riak/riak.mli"
+        "src/riak/riak.ml"
+    ]
+end
+
 begin program "snaps"
     requires = [
         "shell"
         "str"
-        "ezjsonm"
+        "riak"
     ]
     files    = [
         "src/snaps/snaps_main.mli"

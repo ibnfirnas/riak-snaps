@@ -1,47 +1,6 @@
 open Printf
 open Snaps_pervasives
 
-module Riak :
-  sig
-    type t
-
-    val make : ?hostname:string -> ?port:int -> unit -> t
-
-    val fetch_keys
-       : t
-      -> bucket:string
-      -> string list
-
-    val fetch_value
-       : t
-      -> bucket:string
-      -> string  (* Key. Unlabled for partial application. *)
-      -> string * string
-  end
-  =
-  struct
-    type t =
-      { hostname : string
-      ; port     : int
-      }
-
-    let make ?(hostname="localhost") ?(port=8098) () =
-      { hostname
-      ; port
-      }
-
-    let fetch_keys {hostname; port} ~bucket =
-      let uri = sprintf "http://%s:%d/riak/%s?keys=true" hostname port bucket in
-      let data = Shell.out ~prog:"curl" ~args:[uri] in
-      let json = Ezjsonm.from_string data in
-      Ezjsonm.(get_list get_string (find json ["keys"]))
-
-    let fetch_value {hostname; port} ~bucket key =
-      let uri = sprintf "http://%s:%d/riak/%s/%s" hostname port bucket key in
-      let value = Shell.out ~prog:"curl" ~args:[uri] in
-      key, value
-  end
-
 module Git :
   sig
     type status = Unchanged
