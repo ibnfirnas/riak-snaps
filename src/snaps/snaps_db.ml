@@ -4,11 +4,8 @@ type t =
   { path : string
   }
 
-let mkdir path =
-  Shell.exe ~prog:"mkdir" ~args:["-p"; path]
-
 let create ~path =
-  mkdir path;
+  Shell.mkdir path;
   Shell.cd path;
   Git.init ();
   { path = Shell.pwd ()  (* Remember the absolute path *)
@@ -16,7 +13,7 @@ let create ~path =
 
 let put {path} ~bucket (key, value) =
   Shell.cd path;
-  mkdir bucket;
+  Shell.mkdir bucket;
   let filepath = bucket ^ "/" ^ key in
   let oc = open_out filepath in
   output_string oc value;
