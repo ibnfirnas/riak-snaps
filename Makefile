@@ -11,6 +11,7 @@ MAX_BUILD_WORKERS := $(shell sysctl -n hw.ncpu)
 .PHONY:\
 	build \
 	clean \
+	deps \
 	programs \
 	purge
 
@@ -21,6 +22,9 @@ programs: build bin
 		dst="bin/$$p" ; \
 		cp $$src $$dst ; \
 	done
+
+deps:
+	@opam install --yes ezjsonm ocp-build
 
 bin:
 	@mkdir -p bin
