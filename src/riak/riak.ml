@@ -16,7 +16,14 @@ let fetch_keys ~uri =
   Ezjsonm.(get_list get_string (find json ["keys"]))
 
 let fetch_keys_2i {hostname; port} ~bucket =
-  let uri = sprintf "http://%s:%d/buckets/%s/index/bucket_bin/%s" hostname port bucket bucket in
+  let uri =
+    sprintf
+      "http://%s:%d/buckets/%s/index/bucket_bin/%s"
+      hostname
+      port
+      bucket
+      bucket
+  in
   fetch_keys ~uri
 
 let fetch_keys_brutally {hostname; port} ~bucket =
