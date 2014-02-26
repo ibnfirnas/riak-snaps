@@ -1,18 +1,33 @@
+open StdLabels
 open Printf
 open Snaps_pervasives
 
-let main () =
-  let repo_path, hostname, bucket =
+type options =
+  { repo_path : string
+  ; hostname  : string
+  ; bucket    : string
+  }
+
+let take_snapshots ~repo_path ~hostname ~bucket =
+  let db = Snaps_db.create ~path:repo_path in
+  let riak = Riak.make ~hostname () in
+  let keys = Riak.fetch_keys riak ~bucket in
+  let fetch = Riak.fetch_value riak ~bucket in
+  let store = Snaps_db.put db ~bucket in
+  List.iter keys ~f:(fetch |- store)
+
+let get_opts () =
     try
-      Sys.argv.(1), Sys.argv.(2), Sys.argv.(3)
+      { repo_path = Sys.argv.(1)
+      ; hostname  = Sys.argv.(2)
+      ; bucket    = Sys.argv.(3)
+      }
     with Invalid_argument "index out of bounds" ->
       eprintf "USAGE: %s repo_path hostname bucket\n%!" Sys.argv.(0);
       exit 1
-  in
-  let db = Snaps_db.create ~path:repo_path in
-  let riak = Riak.make ~hostname () in
-  List.iter
-    (Riak.fetch_value riak ~bucket |- Snaps_db.put db ~bucket)
-    (Riak.fetch_keys  riak ~bucket)
+
+let main () =
+  let {repo_path; hostname; bucket} = get_opts () in
+  take_snapshots ~repo_path ~hostname ~bucket
 
 let () = main ()
