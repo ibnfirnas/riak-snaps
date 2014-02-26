@@ -11,7 +11,7 @@ type options =
 let take_snapshots ~repo_path ~hostname ~bucket =
   let db = Snaps_db.create ~path:repo_path in
   let riak = Riak.make ~hostname () in
-  let keys = Riak.fetch_keys_brutally riak ~bucket in
+  let keys = Riak.fetch_keys_2i riak ~bucket in
   let fetch = Riak.fetch_value riak ~bucket in
   let store = Snaps_db.put db ~bucket in
   List.iter keys ~f:(fetch |- store)
