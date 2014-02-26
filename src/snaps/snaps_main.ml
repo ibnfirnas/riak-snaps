@@ -1,7 +1,7 @@
 open Printf
 open Snaps_pervasives
 
-let () =
+let main () =
   let repo_path, hostname, bucket =
     try
       Sys.argv.(1), Sys.argv.(2), Sys.argv.(3)
@@ -14,3 +14,5 @@ let () =
   List.iter
     (Riak.fetch_value riak ~bucket |- Snaps_db.put db ~bucket)
     (Riak.fetch_keys  riak ~bucket)
+
+let () = main ()
