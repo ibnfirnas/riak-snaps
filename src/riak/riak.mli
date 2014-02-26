@@ -2,7 +2,7 @@ type t
 
 val make : ?hostname:string -> ?port:int -> unit -> t
 
-val fetch_keys
+val fetch_keys_brutally
    : t
   -> bucket:string
   -> string list

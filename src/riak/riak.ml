@@ -10,7 +10,7 @@ let make ?(hostname="localhost") ?(port=8098) () =
   ; port
   }
 
-let fetch_keys {hostname; port} ~bucket =
+let fetch_keys_brutally {hostname; port} ~bucket =
   let uri = sprintf "http://%s:%d/riak/%s?keys=true" hostname port bucket in
   let data = Shell.out ~prog:"curl" ~args:[uri] in
   let json = Ezjsonm.from_string data in
