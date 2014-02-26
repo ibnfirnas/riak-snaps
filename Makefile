@@ -6,8 +6,8 @@ DIR_BUILD := _obuild
 
 MAX_BUILD_WORKERS := \
 	$(shell nproc             2> /dev/null \
-			 || gnproc            2> /dev/null \
-			 || sysctl -n hw.ncpu 2> /dev/null \
+	     || gnproc            2> /dev/null \
+	     || sysctl -n hw.ncpu 2> /dev/null \
 	 )
 
 
