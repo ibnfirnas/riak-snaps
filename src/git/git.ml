@@ -1,6 +1,7 @@
 type status = Unchanged
             | Added
             | Modified
+            | Unexpected of string
 
 let init () =
   Shell.exe ~prog:"git" ~args:["init"]
@@ -13,7 +14,7 @@ let status ~filepath =
   | ""                                   -> Unchanged
   | s when (s = "A  " ^ filepath ^ "\n") -> Added
   | s when (s = "M  " ^ filepath ^ "\n") -> Modified
-  | s                                    -> assert false
+  | s                                    -> Unexpected s
   (* TODO: Handle other status codes. *)
 
 let commit ~msg =

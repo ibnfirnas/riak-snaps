@@ -25,3 +25,5 @@ let put {path} ~bucket (key, value) =
       Git.commit ~msg:(sprintf "'Update %s'" filepath)
   | Git.Unchanged ->
       eprintf "Not committing %S. Status was Unchanged.\n%!" filepath
+  | Git.Unexpected status ->
+      eprintf "Not committing %S. Status was Unexpected: %S.\n%!" filepath status

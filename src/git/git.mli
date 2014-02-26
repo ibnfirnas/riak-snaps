@@ -1,6 +1,7 @@
 type status = Unchanged
             | Added
             | Modified
+            | Unexpected of string
 
 val init   :            unit -> unit
 
