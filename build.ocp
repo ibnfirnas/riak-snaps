@@ -49,6 +49,7 @@ end
 begin program "snaps"
     requires = [
         "core"
+        "async"
         "threads"
         "shell"
         "str"

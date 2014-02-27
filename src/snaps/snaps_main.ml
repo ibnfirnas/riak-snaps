@@ -1,4 +1,6 @@
 open Core.Std
+open Async.Std
+
 open Snaps_pervasives
 
 type options =
@@ -16,17 +18,23 @@ let take_snapshots ~repo_path ~hostname ~bucket =
   List.iter keys ~f:(fetch |- store)
 
 let get_opts () =
-    try
-      { repo_path = Sys.argv.(1)
-      ; hostname  = Sys.argv.(2)
-      ; bucket    = Sys.argv.(3)
-      }
+    try Ok { repo_path = Sys.argv.(1)
+           ; hostname  = Sys.argv.(2)
+           ; bucket    = Sys.argv.(3)
+           }
     with Invalid_argument "index out of bounds" ->
-      eprintf "USAGE: %s repo_path hostname bucket\n%!" Sys.argv.(0);
-      exit 1
+      Error `Invalid_argument
 
 let main () =
-  let {repo_path; hostname; bucket} = get_opts () in
-  take_snapshots ~repo_path ~hostname ~bucket
+  begin match get_opts () with
+  | Ok {repo_path; hostname; bucket} ->
+    take_snapshots ~repo_path ~hostname ~bucket;
+    shutdown 0;
+
+  | Error `Invalid_argument ->
+    eprintf "USAGE: %s repo_path hostname bucket\n%!" Sys.argv.(0);
+    shutdown 1
+  end;
+  never_returns (Scheduler.go ())
 
 let () = main ()
