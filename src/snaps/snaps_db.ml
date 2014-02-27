@@ -21,12 +21,15 @@ let put {path} ~bucket (key, value) =
   Git.add ~filepath;
   match Git.status ~filepath with
   | Git.Added ->
-      eprintf "Committing: %S. Known status: Added\n%!" filepath;
-      Git.commit ~msg:(sprintf "'Add %s'" filepath)
+    eprintf "Committing: %S. Known status: Added\n%!" filepath;
+    Git.commit ~msg:(sprintf "'Add %s'" filepath)
+
   | Git.Modified ->
-      eprintf "Committing: %S. Known status: Modified\n%!" filepath;
-      Git.commit ~msg:(sprintf "'Update %s'" filepath)
+    eprintf "Committing: %S. Known status: Modified\n%!" filepath;
+    Git.commit ~msg:(sprintf "'Update %s'" filepath)
+
   | Git.Unchanged ->
-      eprintf "Skipping: %S. Known status: Unchanged\n%!" filepath
+    eprintf "Skipping: %S. Known status: Unchanged\n%!" filepath
+
   | Git.Unexpected status ->
-      eprintf "Skipping: %S. Unknown status: %S\n%!" filepath status
+    eprintf "Skipping: %S. Unknown status: %S\n%!" filepath status
