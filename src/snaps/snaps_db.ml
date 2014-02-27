@@ -14,7 +14,7 @@ let create ~path =
 let put {path} ~bucket (key, value) =
   Shell.cd path;
   Shell.mkdir bucket;
-  let filepath = bucket ^ "/" ^ key in
+  let filepath = Filename.concat bucket key in
   Out_channel.write_all filepath ~data:value;
   Git.add ~filepath;
   match Git.status ~filepath with
