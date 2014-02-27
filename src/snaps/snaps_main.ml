@@ -1,5 +1,4 @@
-open StdLabels
-open Printf
+open Core.Std
 open Snaps_pervasives
 
 type options =

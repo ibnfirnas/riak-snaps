@@ -1,4 +1,4 @@
-open Printf
+open Core.Std
 
 type t =
   { path : string
@@ -15,9 +15,7 @@ let put {path} ~bucket (key, value) =
   Shell.cd path;
   Shell.mkdir bucket;
   let filepath = bucket ^ "/" ^ key in
-  let oc = open_out filepath in
-  output_string oc value;
-  close_out oc;
+  Out_channel.write_all filepath ~data:value;
   Git.add ~filepath;
   match Git.status ~filepath with
   | Git.Added ->
