@@ -24,10 +24,9 @@ let fetch_keys_2i {hostname; port} ~bucket =
   Log.Global.flushed () >>= fun () ->
   let uri =
     sprintf
-      "http://%s:%d/buckets/%s/index/bucket_bin/%s"
+      "http://%s:%d/buckets/%s/index/$bucket/_"
       hostname
       port
-      bucket
       bucket
   in
   fetch_keys ~uri
