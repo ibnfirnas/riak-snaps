@@ -3,7 +3,7 @@ open Async.Std
 
 open Snaps_pervasives
 
-let fetcher ~writer:w ~riak ~bucket =
+let fetcher ~writer:w ~riak ~bucket () =
   let keys = Riak.fetch_keys_2i riak ~bucket in
   let fetch key =
     let kv = Riak.fetch_value riak ~bucket key in
@@ -13,7 +13,7 @@ let fetcher ~writer:w ~riak ~bucket =
   Pipe.close w;
   return ()
 
-let storer ~reader:r ~db ~bucket =
+let storer ~reader:r ~db ~bucket () =
   let rec store () =
       Pipe.read r >>= function
       | `Eof   ->
@@ -26,12 +26,19 @@ let storer ~reader:r ~db ~bucket =
   in
   store ()
 
+let start ~workers =
+  Deferred.List.iter workers ~f:(fun w -> w ()) ~how:`Parallel
+
 let main ~repo_path ~hostname ~port ~bucket =
   let db = Snaps_db.create ~path:repo_path in
   let riak = Riak.make ~hostname ~port () in
   let r, w = Pipe.create () in
-  don't_wait_for (fetcher ~writer:w ~riak ~bucket);
-                  storer  ~reader:r ~db   ~bucket >>= fun () ->
+  let workers =
+    [ fetcher ~writer:w ~riak ~bucket
+    ; storer  ~reader:r ~db   ~bucket
+    ]
+  in
+  start ~workers >>= fun () ->
   shutdown 0;
   return ()
 
