@@ -29,7 +29,9 @@ end
 
 begin library "riak"
     requires = [
-        "shell"
+        "core"
+        "async"
+        "async_shell"
         "ezjsonm"
     ]
     files    = [
@@ -50,6 +52,7 @@ begin program "snaps"
     requires = [
         "core"
         "async"
+        "async_shell"
         "threads"
         "shell"
         "str"

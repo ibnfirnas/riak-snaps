@@ -4,9 +4,9 @@ open Async.Std
 open Snaps_pervasives
 
 let fetcher ~writer:w ~riak ~bucket () =
-  let keys = Riak.fetch_keys_2i riak ~bucket in
+  Riak.fetch_keys_2i riak ~bucket >>= fun keys ->
   let fetch key =
-    let kv = Riak.fetch_value riak ~bucket key in
+    Riak.fetch_value riak ~bucket key >>= fun kv ->
     Pipe.write w kv
   in
   Deferred.List.iter keys ~f:fetch ~how:`Parallel >>= fun () ->
