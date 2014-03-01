@@ -3,7 +3,7 @@ open Async.Std
 
 type t
 
-val create : path:string -> t
+val create : path:string -> t Deferred.t
 
 val put
    : t

@@ -41,7 +41,11 @@ begin library "riak"
 end
 
 begin library "git"
-    requires = [ "shell" ]
+    requires = [
+        "core"
+        "async"
+        "async_shell"
+    ]
     files    = [
         "src/git/git.mli"
         "src/git/git.ml"

@@ -40,7 +40,7 @@ let main ~repo_path ~hostname ~port ~bucket =
   Log.Global.set_level `Debug;
   Log.Global.set_output [Log.Output.stderr ()];
 
-  let db = Snaps_db.create ~path:repo_path in
+  Snaps_db.create ~path:repo_path >>= fun db ->
   let riak = Riak.make ~hostname ~port () in
   let r, w = Pipe.create () in
   let workers =
