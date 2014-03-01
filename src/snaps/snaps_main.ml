@@ -15,14 +15,14 @@ let fetcher ~writer:w ~riak ~bucket () =
 
 let storer ~reader:r ~db ~bucket () =
   let rec store () =
-      Pipe.read r >>= function
-      | `Eof   ->
-        Pipe.close_read r;
-        return ()
+    Pipe.read r >>= function
+    | `Eof   ->
+      Pipe.close_read r;
+      return ()
 
-      | `Ok kv ->
-        Snaps_db.put db ~bucket kv;
-        store ()
+    | `Ok kv ->
+      Snaps_db.put db ~bucket kv;
+      store ()
   in
   store ()
 
