@@ -20,7 +20,7 @@ let fetch_keys ~uri =
   return Ezjsonm.(get_list get_string (find json ["keys"]))
 
 let fetch_keys_2i {hostname; port} ~bucket =
-  eprintf "Fetch  : keys of %s. Via 2i\n%!" bucket;
+  Log.Global.info "Fetch  : keys of %s. Via 2i" bucket;
   let uri =
     sprintf
       "http://%s:%d/buckets/%s/index/bucket_bin/%s"
@@ -32,12 +32,12 @@ let fetch_keys_2i {hostname; port} ~bucket =
   fetch_keys ~uri
 
 let fetch_keys_brutally {hostname; port} ~bucket =
-  eprintf "Fetch  : keys of %s. Via brute force listing!\n%!" bucket;
+  Log.Global.info "Fetch  : keys of %s. Via brute force listing!" bucket;
   let uri = sprintf "http://%s:%d/riak/%s?keys=true" hostname port bucket in
   fetch_keys ~uri
 
 let fetch_value {hostname; port} ~bucket key =
-  eprintf "Fetch  : %S\n%!" (bucket ^ "/" ^ key);
+  Log.Global.info "Fetch  : %S" (bucket ^ "/" ^ key);
   let uri = sprintf "http://%s:%d/riak/%s/%s" hostname port bucket key in
   curl ~uri >>= fun value ->
   return (key, value)

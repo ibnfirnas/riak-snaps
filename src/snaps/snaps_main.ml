@@ -30,6 +30,9 @@ let start ~workers =
   Deferred.List.iter workers ~f:(fun w -> w ()) ~how:`Parallel
 
 let main ~repo_path ~hostname ~port ~bucket =
+  Log.Global.set_level `Debug;
+  Log.Global.set_output [Log.Output.stderr ()];
+
   let db = Snaps_db.create ~path:repo_path in
   let riak = Riak.make ~hostname ~port () in
   let r, w = Pipe.create () in

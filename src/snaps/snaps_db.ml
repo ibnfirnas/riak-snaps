@@ -16,22 +16,22 @@ let put {path} ~bucket (key, value) =
   Shell.cd path;
   Shell.mkdir bucket;
   let filepath = Filename.concat bucket key in
-  eprintf "Write  : %S\n%!" filepath;
+  Log.Global.info "Write  : %S" filepath;
   Out_channel.write_all filepath ~data:value;
   Git.add ~filepath;
   begin match Git.status ~filepath with
   | Git.Added ->
-    eprintf "Commit : %S. Known status: Added\n%!" filepath;
+    Log.Global.info "Commit : %S. Known status: Added" filepath;
     Git.commit ~msg:(sprintf "'Add %s'" filepath)
 
   | Git.Modified ->
-    eprintf "Commit : %S. Known status: Modified\n%!" filepath;
+    Log.Global.info "Commit : %S. Known status: Modified" filepath;
     Git.commit ~msg:(sprintf "'Update %s'" filepath)
 
   | Git.Unchanged ->
-    eprintf "Skip   : %S. Known status: Unchanged\n%!" filepath
+    Log.Global.info "Skip   : %S. Known status: Unchanged" filepath
 
   | Git.Unexpected status ->
-    eprintf "Skip   : %S. Unknown status: %S\n%!" filepath status
+    Log.Global.info "Skip   : %S. Unknown status: %S" filepath status
   end;
   return ()
