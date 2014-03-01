@@ -1,4 +1,5 @@
 open Core.Std
+open Async.Std
 
 type t =
   { path : string
@@ -18,7 +19,7 @@ let put {path} ~bucket (key, value) =
   eprintf "Write  : %S\n%!" filepath;
   Out_channel.write_all filepath ~data:value;
   Git.add ~filepath;
-  match Git.status ~filepath with
+  begin match Git.status ~filepath with
   | Git.Added ->
     eprintf "Commit : %S. Known status: Added\n%!" filepath;
     Git.commit ~msg:(sprintf "'Add %s'" filepath)
@@ -32,3 +33,5 @@ let put {path} ~bucket (key, value) =
 
   | Git.Unexpected status ->
     eprintf "Skip   : %S. Unknown status: %S\n%!" filepath status
+  end;
+  return ()

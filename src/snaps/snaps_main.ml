@@ -21,7 +21,7 @@ let storer ~reader:r ~db ~bucket () =
       return ()
 
     | `Ok kv ->
-      Snaps_db.put db ~bucket kv;
+      Snaps_db.put db ~bucket kv >>= fun () ->
       store ()
   in
   store ()
