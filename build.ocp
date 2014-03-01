@@ -42,7 +42,6 @@ begin program "snaps"
         "async"
         "async_shell"
         "threads"
-        "str"
         "riak"
         "git"
     ]
