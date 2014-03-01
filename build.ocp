@@ -11,22 +11,6 @@ begin library "threads"
      byte +    = [ "-custom" ]
 end
 
-begin library "process"
-    requires = [ "unix" ]
-    files    = [
-        "src/process/process.mli"
-        "src/process/process.ml"
-    ]
-end
-
-begin library "shell"
-    requires = [ "process" ]
-    files    = [
-        "src/shell/shell.mli"
-        "src/shell/shell.ml"
-    ]
-end
-
 begin library "riak"
     requires = [
         "core"
@@ -58,7 +42,6 @@ begin program "snaps"
         "async"
         "async_shell"
         "threads"
-        "shell"
         "str"
         "riak"
         "git"
