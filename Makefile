@@ -27,7 +27,7 @@ programs: build bin
 	done
 
 deps:
-	@opam install --yes ezjsonm ocp-build core
+	@opam install --yes ezjsonm ocp-build core async async_shell
 
 bin:
 	@mkdir -p bin
