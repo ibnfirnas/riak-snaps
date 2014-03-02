@@ -62,5 +62,7 @@ begin program "snaps"
         "src/snaps/snaps_main.ml"
         "src/snaps/snaps_worker_fetch.mli"
         "src/snaps/snaps_worker_fetch.ml"
+        "src/snaps/snaps_worker_store.mli"
+        "src/snaps/snaps_worker_store.ml"
     ]
 end

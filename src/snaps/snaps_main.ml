@@ -4,21 +4,6 @@ open Composition
 
 module Log = Snaps_log
 
-let storer ~reader:r ~db ~bucket () =
-  Log.info "Worker \"storer\" BEGIN" >>= fun () ->
-  let rec store () =
-    Pipe.read r >>= function
-    | `Eof   ->
-      Pipe.close_read r;
-      return ()
-
-    | `Ok kv ->
-      Snaps_db.put db ~bucket kv >>= fun () ->
-      store ()
-  in
-  store () >>= fun () ->
-  Log.info "Worker \"storer\" END"
-
 let start ~workers =
   Deferred.List.iter workers ~f:(fun w -> w ()) ~how:`Parallel
 
@@ -29,7 +14,7 @@ let main ~repo_path ~hostname ~port ~bucket ~commits_before_gc =
   let r, w = Pipe.create () in
   let workers =
     [ Snaps_worker_fetch.create ~dst:w ~riak ~bucket
-    ; storer  ~reader:r ~db   ~bucket
+    ; Snaps_worker_store.create ~src:r ~db   ~bucket
     ]
   in
   start ~workers >>| fun () ->
