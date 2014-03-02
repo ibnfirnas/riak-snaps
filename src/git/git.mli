@@ -13,3 +13,5 @@ val add    : filepath:string -> unit Deferred.t
 val status : filepath:string -> status Deferred.t
 
 val commit :      msg:string -> unit Deferred.t
+
+val gc     :            unit -> unit Deferred.t

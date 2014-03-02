@@ -5,6 +5,7 @@ module Ash = Async_shell
 
 type t =
   { path : string
+  ; commits_since_last_gc : int ref
   }
 
 let create ~path =
@@ -12,10 +13,30 @@ let create ~path =
   Sys.chdir path       >>= fun () ->
   Git.init ()          >>= fun () ->
   Sys.getcwd ()        >>= fun path ->  (* Remember the absolute path *)
-  return {path}
+  let t =
+    { path
+    ; commits_since_last_gc = ref 0
+    }
+  in
+  return t
 
-let put {path} ~bucket (key, value) =
-  Sys.chdir path                      >>= fun () ->
+let gc t =
+  Log.Global.info "GC BEGIN";
+  Log.Global.flushed () >>= fun () ->
+  Sys.chdir t.path      >>= fun () ->
+  Git.gc ()             >>= fun () ->
+  t.commits_since_last_gc := 0;
+  Log.Global.info "GC END";
+  Log.Global.flushed ()
+
+let maybe_gc t =
+  match !(t.commits_since_last_gc) with
+  | 10 -> gc t
+  | _  -> return ()
+
+let put t ~bucket (key, value) =
+  Sys.chdir t.path                    >>= fun () ->
+  maybe_gc t                          >>= fun () ->
   Ash.mkdir ~p:() bucket              >>= fun () ->
   let filepath = Filename.concat bucket key in
   Log.Global.info "Write  : %S" filepath;
@@ -26,12 +47,16 @@ let put {path} ~bucket (key, value) =
   | Git.Added ->
     Log.Global.info "Commit : %S. Known status: Added" filepath;
     Log.Global.flushed () >>= fun () ->
-    Git.commit ~msg:(sprintf "'Add %s'" filepath)
+    Git.commit ~msg:(sprintf "'Add %s'" filepath) >>= fun () ->
+    incr t.commits_since_last_gc;
+    return ()
 
   | Git.Modified ->
     Log.Global.info "Commit : %S. Known status: Modified" filepath;
     Log.Global.flushed () >>= fun () ->
-    Git.commit ~msg:(sprintf "'Update %s'" filepath)
+    Git.commit ~msg:(sprintf "'Update %s'" filepath) >>= fun () ->
+    incr t.commits_since_last_gc;
+    return ()
 
   | Git.Unchanged ->
     Log.Global.info "Skip   : %S. Known status: Unchanged" filepath;
