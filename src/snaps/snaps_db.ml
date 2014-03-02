@@ -5,16 +5,18 @@ module Ash = Async_shell
 
 type t =
   { path : string
+  ; commits_before_gc     : int
   ; commits_since_last_gc : int ref
   }
 
-let create ~path =
+let create ~path ~commits_before_gc =
   Ash.mkdir ~p:() path >>= fun () ->
   Sys.chdir path       >>= fun () ->
   Git.init ()          >>= fun () ->
   Sys.getcwd ()        >>= fun path ->  (* Remember the absolute path *)
   let t =
     { path
+    ; commits_before_gc
     ; commits_since_last_gc = ref 0
     }
   in
@@ -30,9 +32,9 @@ let gc t =
   Log.Global.flushed ()
 
 let maybe_gc t =
-  match !(t.commits_since_last_gc) with
-  | 10 -> gc t
-  | _  -> return ()
+  if !(t.commits_since_last_gc) >= t.commits_before_gc
+  then gc t
+  else return ()
 
 let put t ~bucket (key, value) =
   Sys.chdir t.path                    >>= fun () ->

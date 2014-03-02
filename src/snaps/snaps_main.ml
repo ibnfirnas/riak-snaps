@@ -36,11 +36,11 @@ let storer ~reader:r ~db ~bucket () =
 let start ~workers =
   Deferred.List.iter workers ~f:(fun w -> w ()) ~how:`Parallel
 
-let main ~repo_path ~hostname ~port ~bucket =
+let main ~repo_path ~hostname ~port ~bucket ~commits_before_gc =
   Log.Global.set_level `Debug;
   Log.Global.set_output [Log.Output.stderr ()];
 
-  Snaps_db.create ~path:repo_path >>= fun db ->
+  Snaps_db.create ~path:repo_path ~commits_before_gc >>= fun db ->
   let riak = Riak.make ~hostname ~port () in
   let r, w = Pipe.create () in
   let workers =
@@ -69,8 +69,11 @@ let () =
 
       +> flag "-bucket" (required string)
         ~doc:" Riak bucket to take snapshots from"
+
+      +> flag "-commits-before-gc" (optional_with_default 10 int)
+        ~doc:" How many commits to perform before pausing for GC? (default: 10)"
     )
-    ( fun repo_path hostname port bucket () ->
-        main ~repo_path ~hostname ~port ~bucket
+    ( fun repo_path hostname port bucket commits_before_gc () ->
+        main ~repo_path ~hostname ~port ~bucket ~commits_before_gc
     )
   |> Command.run
