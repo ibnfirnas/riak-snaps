@@ -6,8 +6,12 @@ open Snaps_pervasives
 let fetcher ~writer:w ~riak ~bucket () =
   Log.Global.info "Worker \"fetcher\" BEGIN";
   Log.Global.flushed () >>= fun () ->
+  Log.Global.info "Fetch  : keys of %s. Via 2i" bucket;
+  Log.Global.flushed () >>= fun () ->
   Riak.fetch_keys_2i riak ~bucket >>= fun keys ->
   let fetch key =
+    Log.Global.info "Fetch  : %S" (bucket ^ "/" ^ key);
+    Log.Global.flushed () >>= fun () ->
     Riak.fetch_value riak ~bucket key >>= fun kv ->
     Pipe.write w kv
   in
