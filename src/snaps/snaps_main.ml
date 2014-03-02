@@ -1,7 +1,6 @@
 open Core.Std
 open Async.Std
-
-open Snaps_pervasives
+open Composition
 
 module Log = Snaps_log
 
