@@ -48,9 +48,8 @@ let main ~repo_path ~hostname ~port ~bucket ~commits_before_gc =
     ; storer  ~reader:r ~db   ~bucket
     ]
   in
-  start ~workers >>= fun () ->
-  shutdown 0;
-  return ()
+  start ~workers >>| fun () ->
+  shutdown 0
 
 let () =
   Command.async_basic

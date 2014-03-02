@@ -13,11 +13,11 @@ let add ~filepath =
   Async_shell.run "git" ["add"; filepath]
 
 let status ~filepath =
-  Async_shell.run_full "git" ["status"; "--porcelain"; filepath] >>= function
-  | ""                                   -> return Unchanged
-  | s when (s = "A  " ^ filepath ^ "\n") -> return Added
-  | s when (s = "M  " ^ filepath ^ "\n") -> return Modified
-  | s                                    -> return (Unexpected s)
+  Async_shell.run_full "git" ["status"; "--porcelain"; filepath] >>| function
+  | ""                                   -> Unchanged
+  | s when (s = "A  " ^ filepath ^ "\n") -> Added
+  | s when (s = "M  " ^ filepath ^ "\n") -> Modified
+  | s                                    -> (Unexpected s)
   (* TODO: Handle other status codes. *)
 
 let commit ~msg =

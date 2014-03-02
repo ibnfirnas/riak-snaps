@@ -13,14 +13,11 @@ let create ~path ~commits_before_gc =
   Ash.mkdir ~p:() path >>= fun () ->
   Sys.chdir path       >>= fun () ->
   Git.init ()          >>= fun () ->
-  Sys.getcwd ()        >>= fun path ->  (* Remember the absolute path *)
-  let t =
-    { path
-    ; commits_before_gc
-    ; commits_since_last_gc = ref 0
-    }
-  in
-  return t
+  Sys.getcwd ()        >>| fun path ->  (* Remember the absolute path *)
+  { path
+  ; commits_before_gc
+  ; commits_since_last_gc = ref 0
+  }
 
 let gc t =
   Log.Global.info "GC BEGIN";
@@ -49,16 +46,14 @@ let put t ~bucket (key, value) =
   | Git.Added ->
     Log.Global.info "Commit : %S. Known status: Added" filepath;
     Log.Global.flushed () >>= fun () ->
-    Git.commit ~msg:(sprintf "'Add %s'" filepath) >>= fun () ->
-    incr t.commits_since_last_gc;
-    return ()
+    Git.commit ~msg:(sprintf "'Add %s'" filepath) >>| fun () ->
+    incr t.commits_since_last_gc
 
   | Git.Modified ->
     Log.Global.info "Commit : %S. Known status: Modified" filepath;
     Log.Global.flushed () >>= fun () ->
-    Git.commit ~msg:(sprintf "'Update %s'" filepath) >>= fun () ->
-    incr t.commits_since_last_gc;
-    return ()
+    Git.commit ~msg:(sprintf "'Update %s'" filepath) >>| fun () ->
+    incr t.commits_since_last_gc
 
   | Git.Unchanged ->
     Log.Global.info "Skip   : %S. Known status: Unchanged" filepath;

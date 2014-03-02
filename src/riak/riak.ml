@@ -15,9 +15,9 @@ let fetch ~uri =
   Async_shell.run_full "curl" [uri]
 
 let fetch_keys ~uri =
-  fetch ~uri >>= fun data ->
+  fetch ~uri >>| fun data ->
   let json = Ezjsonm.from_string data in
-  return Ezjsonm.(get_list get_string (find json ["keys"]))
+  Ezjsonm.(get_list get_string (find json ["keys"]))
 
 let fetch_keys_2i {hostname; port} ~bucket =
   Log.Global.info "Fetch  : keys of %s. Via 2i" bucket;
@@ -41,5 +41,5 @@ let fetch_value {hostname; port} ~bucket key =
   Log.Global.info "Fetch  : %S" (bucket ^ "/" ^ key);
   Log.Global.flushed () >>= fun () ->
   let uri = sprintf "http://%s:%d/riak/%s/%s" hostname port bucket key in
-  fetch ~uri >>= fun data ->
-  return (key, data)
+  fetch ~uri >>| fun data ->
+  key, data
