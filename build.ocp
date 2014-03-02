@@ -48,6 +48,8 @@ begin program "snaps"
     files    = [
         "src/snaps/snaps_db.mli"
         "src/snaps/snaps_db.ml"
+        "src/snaps/snaps_log.mli"
+        "src/snaps/snaps_log.ml"
         "src/snaps/snaps_main.mli"
         "src/snaps/snaps_main.ml"
         "src/snaps/snaps_pervasives.mli"

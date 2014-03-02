@@ -3,26 +3,23 @@ open Async.Std
 
 open Snaps_pervasives
 
+module Log = Snaps_log
+
 let fetcher ~writer:w ~riak ~bucket () =
-  Log.Global.info "Worker \"fetcher\" BEGIN";
-  Log.Global.flushed () >>= fun () ->
-  Log.Global.info "Fetch  : keys of %s. Via 2i" bucket;
-  Log.Global.flushed () >>= fun () ->
+  Log.info "Worker \"fetcher\" BEGIN"                     >>= fun () ->
+  Log.info (sprintf "Fetch  : keys of %s. Via 2i" bucket) >>= fun () ->
   Riak.fetch_keys_2i riak ~bucket >>= fun keys ->
   let fetch key =
-    Log.Global.info "Fetch  : %S" (bucket ^ "/" ^ key);
-    Log.Global.flushed () >>= fun () ->
+    Log.info (sprintf "Fetch  : %S" (bucket ^ "/" ^ key)) >>= fun () ->
     Riak.fetch_value riak ~bucket key >>= fun kv ->
     Pipe.write w kv
   in
   Deferred.List.iter keys ~f:fetch ~how:`Parallel >>= fun () ->
   Pipe.close w;
-  Log.Global.info "Worker \"fetcher\" END";
-  Log.Global.flushed ()
+  Log.info "Worker \"fetcher\" END"
 
 let storer ~reader:r ~db ~bucket () =
-  Log.Global.info "Worker \"storer\" BEGIN";
-  Log.Global.flushed () >>= fun () ->
+  Log.info "Worker \"storer\" BEGIN" >>= fun () ->
   let rec store () =
     Pipe.read r >>= function
     | `Eof   ->
@@ -34,16 +31,13 @@ let storer ~reader:r ~db ~bucket () =
       store ()
   in
   store () >>= fun () ->
-  Log.Global.info "Worker \"storer\" END";
-  Log.Global.flushed ()
+  Log.info "Worker \"storer\" END"
 
 let start ~workers =
   Deferred.List.iter workers ~f:(fun w -> w ()) ~how:`Parallel
 
 let main ~repo_path ~hostname ~port ~bucket ~commits_before_gc =
-  Log.Global.set_level `Debug;
-  Log.Global.set_output [Log.Output.stderr ()];
-
+  Log.init () >>= fun () ->
   Snaps_db.create ~path:repo_path ~commits_before_gc >>= fun db ->
   let riak = Riak.make ~hostname ~port () in
   let r, w = Pipe.create () in

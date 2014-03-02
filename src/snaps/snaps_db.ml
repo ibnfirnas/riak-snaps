@@ -2,6 +2,7 @@ open Core.Std
 open Async.Std
 
 module Ash = Async_shell
+module Log = Snaps_log
 
 type t =
   { path : string
@@ -20,13 +21,11 @@ let create ~path ~commits_before_gc =
   }
 
 let gc t =
-  Log.Global.info "GC BEGIN";
-  Log.Global.flushed () >>= fun () ->
+  Log.info "GC BEGIN"   >>= fun () ->
   Sys.chdir t.path      >>= fun () ->
   Git.gc ()             >>= fun () ->
   t.commits_since_last_gc := 0;
-  Log.Global.info "GC END";
-  Log.Global.flushed ()
+  Log.info "GC END"
 
 let maybe_gc t =
   if !(t.commits_since_last_gc) >= t.commits_before_gc
@@ -38,27 +37,22 @@ let put t ~bucket (key, value) =
   maybe_gc t                          >>= fun () ->
   Ash.mkdir ~p:() bucket              >>= fun () ->
   let filepath = Filename.concat bucket key in
-  Log.Global.info "Write  : %S" filepath;
-  Log.Global.flushed ()                >>= fun () ->
+  Log.info (sprintf "Write  : %S" filepath) >>= fun () ->
   Writer.save filepath ~contents:value >>= fun () ->
   Git.add ~filepath                    >>= fun () ->
   Git.status ~filepath >>= function
   | Git.Added ->
-    Log.Global.info "Commit : %S. Known status: Added" filepath;
-    Log.Global.flushed () >>= fun () ->
+    Log.info (sprintf "Commit : %S. Known status: Added" filepath) >>= fun () ->
     Git.commit ~msg:(sprintf "'Add %s'" filepath) >>| fun () ->
     incr t.commits_since_last_gc
 
   | Git.Modified ->
-    Log.Global.info "Commit : %S. Known status: Modified" filepath;
-    Log.Global.flushed () >>= fun () ->
+    Log.info (sprintf "Commit : %S. Known status: Modified" filepath) >>= fun () ->
     Git.commit ~msg:(sprintf "'Update %s'" filepath) >>| fun () ->
     incr t.commits_since_last_gc
 
   | Git.Unchanged ->
-    Log.Global.info "Skip   : %S. Known status: Unchanged" filepath;
-    Log.Global.flushed ()
+    Log.info (sprintf "Skip   : %S. Known status: Unchanged" filepath)
 
   | Git.Unexpected status ->
-    Log.Global.info "Skip   : %S. Unknown status: %S" filepath status;
-    Log.Global.flushed ()
+    Log.info (sprintf "Skip   : %S. Unknown status: %S" filepath status)
