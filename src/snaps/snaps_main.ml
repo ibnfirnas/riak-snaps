@@ -70,7 +70,7 @@ let () =
       +> flag "-bucket" (required string)
         ~doc:" Riak bucket to take snapshots from"
 
-      +> flag "-commits-before-gc" (optional_with_default 10 int)
+      +> flag "-commits-before-gc" (optional_with_default 100 int)
         ~doc:" How many commits to perform before pausing for GC? (default: 10)"
     )
     ( fun repo_path hostname port bucket commits_before_gc () ->
