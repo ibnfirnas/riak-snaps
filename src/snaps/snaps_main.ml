@@ -4,19 +4,6 @@ open Composition
 
 module Log = Snaps_log
 
-let fetcher ~writer:w ~riak ~bucket () =
-  Log.info "Worker \"fetcher\" BEGIN"                     >>= fun () ->
-  Log.info (sprintf "Fetch  : keys of %s. Via 2i" bucket) >>= fun () ->
-  Riak.fetch_keys_2i riak ~bucket >>= fun keys ->
-  let fetch key =
-    Log.info (sprintf "Fetch  : %S" (bucket ^ "/" ^ key)) >>= fun () ->
-    Riak.fetch_value riak ~bucket key >>= fun kv ->
-    Pipe.write w kv
-  in
-  Deferred.List.iter keys ~f:fetch ~how:`Parallel >>= fun () ->
-  Pipe.close w;
-  Log.info "Worker \"fetcher\" END"
-
 let storer ~reader:r ~db ~bucket () =
   Log.info "Worker \"storer\" BEGIN" >>= fun () ->
   let rec store () =
@@ -41,7 +28,7 @@ let main ~repo_path ~hostname ~port ~bucket ~commits_before_gc =
   let riak = Riak.make ~hostname ~port () in
   let r, w = Pipe.create () in
   let workers =
-    [ fetcher ~writer:w ~riak ~bucket
+    [ Snaps_worker_fetch.create ~dst:w ~riak ~bucket
     ; storer  ~reader:r ~db   ~bucket
     ]
   in
