@@ -29,7 +29,8 @@ let create ~dst ~riak_conn ~riak_bucket () =
   Log.info "Worker \"fetcher\": STARTED"                           >>= fun () ->
   Log.info (sprintf "Fetch BEGIN: keys of %s. Via 2i" riak_bucket) >>= fun () ->
   Riak.Object.ID.fetch_via_2i riak_conn ~bucket:riak_bucket        >>= fun ids ->
+  let ids = Pipe.of_list ids in
   Log.info (sprintf "Fetch   END: keys of %s. Via 2i" riak_bucket) >>= fun () ->
-  Deferred.List.iter ids ~how:`Parallel ~f:(fetch_object t)        >>= fun () ->
+  Pipe.iter ids ~f:(fetch_object t)                                >>= fun () ->
   Pipe.close dst;
   Log.info "Worker \"fetcher\": FINISHED"
