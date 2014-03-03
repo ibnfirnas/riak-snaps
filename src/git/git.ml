@@ -23,5 +23,6 @@ let status ~filepath =
 let commit ~msg =
   Async_shell.run "git" ["commit"; "-m"; msg]
 
-let gc () =
-  Async_shell.run "git" ["gc"; "--prune=now"]
+let gc ?(aggressive=false) () =
+  let aggressive_flag = if aggressive then ["--aggressive"] else [] in
+  Async_shell.run "git" ("gc" :: "--prune=now" :: aggressive_flag)
