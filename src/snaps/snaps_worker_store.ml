@@ -11,8 +11,8 @@ let rec store t =
   let {src; db} = t in
   Pipe.read src >>= function
   | `Eof   ->
-    Pipe.close_read src;
-    return ()
+    Snaps_db.gc_major db >>| fun () ->
+    Pipe.close_read src
 
   | `Ok object_info ->
     Snaps_db.put db object_info >>= fun () ->
