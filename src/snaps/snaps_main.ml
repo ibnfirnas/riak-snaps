@@ -32,6 +32,14 @@ let main
   shutdown 0
 
 let () =
+  let
+    module Default = struct
+      let riak_host               = "localhost"
+      let riak_port               = 8098
+      let commits_before_gc_minor = 100
+      let commits_before_gc_major = 500
+    end
+  in
   Command.async_basic
     ~summary:"Snapshot Riak objects to a Git repository."
     Command.Spec.(
@@ -40,20 +48,24 @@ let () =
       +> flag "-repo-path" (required string)
         ~doc:" Path to directory in which to store data"
 
-      +> flag "-host" (optional_with_default "localhost" string)
-        ~doc:" Riak hostname or IP address (default: localhost)"
+      +> flag "-host" (optional_with_default Default.riak_host string)
+        ~doc:(sprintf " Riak hostname or IP address (default: %s)" Default.riak_host)
 
-      +> flag "-port" (optional_with_default 8098 int)
-        ~doc:" Riak HTTP port (default: 8098)"
+      +> flag "-port" (optional_with_default Default.riak_port int)
+        ~doc:(sprintf " Riak HTTP port (default: %d)" Default.riak_port)
 
       +> flag "-bucket" (required string)
         ~doc:" Riak bucket to take snapshots from"
 
-      +> flag "-commits-before-gc-minor" (optional_with_default 100 int)
-        ~doc:" How many commits to perform before pausing for minor/normal GC? (default: 100)"
+      +> flag
+        "-commits-before-gc-minor"
+        (optional_with_default Default.commits_before_gc_minor int)
+        ~doc:(sprintf " How many commits to perform before pausing for minor/normal GC? (default: %d)" Default.commits_before_gc_minor)
 
-      +> flag "-commits-before-gc-major" (optional_with_default 500 int)
-        ~doc:" How many commits to perform before pausing for major/aggressive GC? (default: 500)"
+      +> flag
+        "-commits-before-gc-major"
+        (optional_with_default Default.commits_before_gc_major int)
+        ~doc:(sprintf " How many commits to perform before pausing for major/aggressive GC? (default: %d)" Default.commits_before_gc_major)
     )
     ( fun repo_path
           hostname
