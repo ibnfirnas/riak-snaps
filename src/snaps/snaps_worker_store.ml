@@ -4,7 +4,7 @@ open Async.Std
 module Log = Snaps_log
 
 type t = { db     : Snaps_db.t
-         ; src    : Riak.Object.t Pipe.Reader.t
+         ; src    : Snaps_object_info.t Pipe.Reader.t
          }
 
 let rec store t =
@@ -14,8 +14,8 @@ let rec store t =
     Pipe.close_read src;
     return ()
 
-  | `Ok obj ->
-    Snaps_db.put db obj >>= fun () ->
+  | `Ok object_info ->
+    Snaps_db.put db object_info >>= fun () ->
     store t
 
 let create ~src ~db () =

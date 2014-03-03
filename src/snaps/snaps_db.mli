@@ -7,5 +7,5 @@ val create : path:string -> commits_before_gc:int -> t Deferred.t
 
 val put
    : t
-  -> Riak.Object.t
+  -> Snaps_object_info.t
   -> unit Deferred.t
