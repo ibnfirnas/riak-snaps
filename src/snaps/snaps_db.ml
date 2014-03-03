@@ -53,14 +53,16 @@ let put t obj_info =
   Git.add ~filepath:p                 >>= fun () ->
   Git.status ~filepath:p >>= function
   | Git.Added ->
-    Log.info (sprintf "Commit : %S. Known status: Added" p) >>= fun () ->
-    Git.commit ~msg:(sprintf "'Add %s'" p) >>| fun () ->
+    Log.info (sprintf "Commit BEGIN: %S. Known status: Added" p) >>= fun () ->
+    Git.commit ~msg:(sprintf "'Add %s'" p)                       >>= fun () ->
+    Log.info (sprintf "Commit   END: %S. Known status: Added" p) >>| fun () ->
     incr t.commits_since_last_gc_minor;
     incr t.commits_since_last_gc_major
 
   | Git.Modified ->
-    Log.info (sprintf "Commit : %S. Known status: Modified" p) >>= fun () ->
-    Git.commit ~msg:(sprintf "'Update %s'" p) >>| fun () ->
+    Log.info (sprintf "Commit BEGIN: %S. Known status: Modified" p) >>= fun () ->
+    Git.commit ~msg:(sprintf "'Update %s'" p)                       >>= fun () ->
+    Log.info (sprintf "Commit   END: %S. Known status: Modified" p) >>| fun () ->
     incr t.commits_since_last_gc_minor;
     incr t.commits_since_last_gc_major
 
