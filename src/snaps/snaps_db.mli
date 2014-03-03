@@ -3,7 +3,11 @@ open Async.Std
 
 type t
 
-val create : path:string -> commits_before_gc:int -> t Deferred.t
+val create
+  :  path:string
+  -> commits_before_gc_minor:int
+  -> commits_before_gc_major:int
+  -> t Deferred.t
 
 val put
    : t

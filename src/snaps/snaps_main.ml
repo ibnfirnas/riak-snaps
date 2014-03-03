@@ -7,9 +7,20 @@ module Log = Snaps_log
 let start ~workers =
   Deferred.List.iter workers ~f:(fun w -> w ()) ~how:`Parallel
 
-let main ~repo_path ~hostname ~port ~bucket ~commits_before_gc =
+let main
+    ~repo_path
+    ~hostname
+    ~port
+    ~bucket
+    ~commits_before_gc_minor
+    ~commits_before_gc_major
+  =
   Log.init () >>= fun () ->
-  Snaps_db.create ~path:repo_path ~commits_before_gc >>= fun db ->
+  Snaps_db.create
+    ~path:repo_path
+    ~commits_before_gc_minor
+    ~commits_before_gc_major
+  >>= fun db ->
   let riak_conn = Riak.Conn.make ~hostname ~port () in
   let r, w = Pipe.create () in
   let workers =
@@ -38,10 +49,26 @@ let () =
       +> flag "-bucket" (required string)
         ~doc:" Riak bucket to take snapshots from"
 
-      +> flag "-commits-before-gc" (optional_with_default 100 int)
-        ~doc:" How many commits to perform before pausing for GC? (default: 10)"
+      +> flag "-commits-before-gc-minor" (optional_with_default 100 int)
+        ~doc:" How many commits to perform before pausing for minor/normal GC? (default: 10)"
+
+      +> flag "-commits-before-gc-major" (optional_with_default 500 int)
+        ~doc:" How many commits to perform before pausing for major/aggressive GC? (default: 500)"
     )
-    ( fun repo_path hostname port bucket commits_before_gc () ->
-        main ~repo_path ~hostname ~port ~bucket ~commits_before_gc
+    ( fun repo_path
+          hostname
+          port
+          bucket
+          commits_before_gc_minor
+          commits_before_gc_major
+          ()
+      ->
+        main
+          ~repo_path
+          ~hostname
+          ~port
+          ~bucket
+          ~commits_before_gc_minor
+          ~commits_before_gc_major
     )
   |> Command.run
