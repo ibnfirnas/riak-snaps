@@ -1,22 +1,37 @@
 open Core.Std
 open Async.Std
 
-type t
+module Conn : sig
+  type t
 
-val make : ?hostname:string -> ?port:int -> unit -> t
+  val make : ?hostname:string -> ?port:int -> unit -> t
+end
 
-val fetch_keys_2i
-   : t
-  -> bucket:string
-  -> (string list) Deferred.t
+module Object : sig
+  module ID : sig
+    type t = { bucket : string
+             ; key    : string
+             }
 
-val fetch_keys_brutally
-   : t
-  -> bucket:string
-  -> (string list) Deferred.t
+    val to_string : t -> string
 
-val fetch_value
-   : t
-  -> bucket:string
-  -> string  (* Key. Unlabled for partial application. *)
-  -> (string * string) Deferred.t
+    val fetch_via_2i
+      :  Conn.t
+      -> bucket:string
+      -> (t list) Deferred.t
+
+    val fetch_via_brute_force
+      :  Conn.t
+      -> bucket:string
+      -> (t list) Deferred.t
+  end
+
+  type t = { id   : ID.t
+           ; data : string
+           }
+
+  val fetch
+     : Conn.t
+    -> ID.t
+    -> t Deferred.t
+end

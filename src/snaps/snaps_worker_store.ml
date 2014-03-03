@@ -4,23 +4,22 @@ open Async.Std
 module Log = Snaps_log
 
 type t = { db     : Snaps_db.t
-         ; bucket : string
-         ; src    : (string * string) Pipe.Reader.t
+         ; src    : Riak.Object.t Pipe.Reader.t
          }
 
 let rec store t =
-  let {src; db; bucket} = t in
+  let {src; db} = t in
   Pipe.read src >>= function
   | `Eof   ->
     Pipe.close_read src;
     return ()
 
-  | `Ok kv ->
-    Snaps_db.put db ~bucket kv >>= fun () ->
+  | `Ok obj ->
+    Snaps_db.put db obj >>= fun () ->
     store t
 
-let create ~src ~db ~bucket () =
+let create ~src ~db () =
   Log.info "Worker \"storer\" STARTED" >>= fun () ->
-  let t = {src; db; bucket} in
+  let t = {src; db} in
   store t >>= fun () ->
   Log.info "Worker \"storer\" FINISHED"

@@ -10,11 +10,11 @@ let start ~workers =
 let main ~repo_path ~hostname ~port ~bucket ~commits_before_gc =
   Log.init () >>= fun () ->
   Snaps_db.create ~path:repo_path ~commits_before_gc >>= fun db ->
-  let riak = Riak.make ~hostname ~port () in
+  let riak_conn = Riak.Conn.make ~hostname ~port () in
   let r, w = Pipe.create () in
   let workers =
-    [ Snaps_worker_fetch.create ~dst:w ~riak ~bucket
-    ; Snaps_worker_store.create ~src:r ~db   ~bucket
+    [ Snaps_worker_fetch.create ~dst:w ~riak_conn ~riak_bucket:bucket
+    ; Snaps_worker_store.create ~src:r ~db
     ]
   in
   start ~workers >>| fun () ->

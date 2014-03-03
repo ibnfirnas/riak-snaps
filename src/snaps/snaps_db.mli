@@ -7,6 +7,5 @@ val create : path:string -> commits_before_gc:int -> t Deferred.t
 
 val put
    : t
-  -> bucket:string
-  -> string * string  (* Key/Value pair. Unlabled for partial application. *)
+  -> Riak.Object.t
   -> unit Deferred.t
