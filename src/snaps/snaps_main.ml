@@ -50,7 +50,7 @@ let () =
         ~doc:" Riak bucket to take snapshots from"
 
       +> flag "-commits-before-gc-minor" (optional_with_default 100 int)
-        ~doc:" How many commits to perform before pausing for minor/normal GC? (default: 10)"
+        ~doc:" How many commits to perform before pausing for minor/normal GC? (default: 100)"
 
       +> flag "-commits-before-gc-major" (optional_with_default 500 int)
         ~doc:" How many commits to perform before pausing for major/aggressive GC? (default: 500)"
