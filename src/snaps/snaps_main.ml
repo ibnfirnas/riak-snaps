@@ -25,8 +25,8 @@ let main
   let riak_conn = Riak.Conn.make ~hostname ~port () in
   let r, w = Pipe.create () in
   let workers =
-    [ Snaps_worker_fetch.create ~dst:w ~riak_conn ~riak_bucket ~batch_size
-    ; Snaps_worker_store.create ~src:r ~db
+    [ Snaps_worker_fetch.create ~w ~riak_conn ~riak_bucket ~batch_size
+    ; Snaps_worker_store.create ~r ~db
     ]
   in
   start ~workers >>| fun () ->
