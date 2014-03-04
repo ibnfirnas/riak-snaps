@@ -14,4 +14,8 @@ module Make (Caller : CALLER) = struct
   let info msg =
     Log.Global.info "| %s | %s" Caller.name msg;
     Log.Global.flushed ()
+
+  let error msg =
+    Log.Global.error "| %s | %s" Caller.name msg;
+    Log.Global.flushed ()
 end
