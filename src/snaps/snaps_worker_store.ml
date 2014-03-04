@@ -1,7 +1,7 @@
 open Core.Std
 open Async.Std
 
-module Log = Snaps_log
+module Log = Snaps_log.Make (struct let name = "Snaps_worker_store" end)
 
 type t = { db     : Snaps_db.t
          ; r      : Snaps_object_info.t Pipe.Reader.t
@@ -19,7 +19,7 @@ let rec store t =
     store t
 
 let create ~r ~db () =
-  Log.info "Worker \"storer\" STARTED" >>= fun () ->
+  Log.info "Worker STARTED" >>= fun () ->
   let t = {r; db} in
   store t >>= fun () ->
-  Log.info "Worker \"storer\" FINISHED"
+  Log.info "Worker FINISHED"

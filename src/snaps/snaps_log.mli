@@ -1,6 +1,11 @@
 open Core.Std
 open Async.Std
 
-val init : unit -> unit Deferred.t
+module type CALLER = sig
+  val name : string
+end
 
-val info : string -> unit Deferred.t
+module Make (Caller : CALLER) : sig
+  val init : unit   -> unit Deferred.t
+  val info : string -> unit Deferred.t
+end

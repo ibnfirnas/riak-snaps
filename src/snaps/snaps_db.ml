@@ -2,7 +2,7 @@ open Core.Std
 open Async.Std
 
 module Ash = Async_shell
-module Log = Snaps_log
+module Log = Snaps_log.Make (struct let name = "Snaps_db" end)
 
 type t =
   { path : string

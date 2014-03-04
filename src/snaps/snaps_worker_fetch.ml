@@ -2,7 +2,7 @@ open Core.Std
 open Async.Std
 
 module Ash = Async_shell
-module Log = Snaps_log
+module Log = Snaps_log.Make (struct let name = "Snaps_worker_fetch" end)
 
 type t = { riak_conn : Riak.Conn.t
          ; w         : Snaps_object_info.t Pipe.Writer.t
@@ -37,11 +37,11 @@ let fetch_objects t ids ~batch_size =
 
 let create ~w ~riak_conn ~riak_bucket ~batch_size () =
   let t = {riak_conn; w} in
-  Log.info "Worker \"fetcher\": STARTED"                           >>= fun () ->
+  Log.info "Worker STARTED"                           >>= fun () ->
   Log.info (sprintf "Fetch BEGIN: keys of %s. Via 2i" riak_bucket) >>= fun () ->
   Riak.Object.ID.fetch_via_2i riak_conn ~bucket:riak_bucket        >>= fun ids ->
   let ids = Pipe.of_list ids in
   Log.info (sprintf "Fetch END: keys of %s. Via 2i" riak_bucket)   >>= fun () ->
   fetch_objects t ids ~batch_size                                  >>= fun () ->
   Pipe.close w;
-  Log.info "Worker \"fetcher\": FINISHED"
+  Log.info "Worker FINISHED"

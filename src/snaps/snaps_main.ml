@@ -2,7 +2,7 @@ open Core.Std
 open Async.Std
 open Composition
 
-module Log = Snaps_log
+module Log = Snaps_log.Make (struct let name = "Snaps_main" end)
 
 let start ~workers =
   Deferred.List.iter workers ~f:(fun w -> w ()) ~how:`Parallel
