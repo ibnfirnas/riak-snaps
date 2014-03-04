@@ -18,7 +18,7 @@ let rec store t =
     Snaps_db.put db object_info >>= fun () ->
     store t
 
-let create ~r ~db () =
+let run ~r ~db () =
   Log.info "Worker STARTED" >>= fun () ->
   let t = {r; db} in
   store t >>= fun () ->

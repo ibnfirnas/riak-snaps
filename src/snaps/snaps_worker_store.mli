@@ -1,7 +1,7 @@
 open Core.Std
 open Async.Std
 
-val create
+val run
   :  r:Snaps_object_info.t Pipe.Reader.t
   -> db:Snaps_db.t
   -> unit

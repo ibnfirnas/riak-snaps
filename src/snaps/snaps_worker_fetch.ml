@@ -33,7 +33,7 @@ let fetch_objects t ids ~batch_size =
   in
   fetch_batch ()
 
-let create ~w ~riak_conn ~riak_bucket ~batch_size () =
+let run ~w ~riak_conn ~riak_bucket ~batch_size () =
   let t = {riak_conn; w} in
   Log.info "Worker STARTED"                           >>= fun () ->
   Log.info (sprintf "Fetch BEGIN: keys of %s. Via 2i" riak_bucket) >>= fun () ->
