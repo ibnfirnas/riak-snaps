@@ -24,13 +24,23 @@ let fetch_object {riak_conn; dst} id =
   Log.info (sprintf "Pipe.write   END: %S" object_name)            >>= fun () ->
   Log.info (sprintf "Fetch   END: %S" object_name)
 
-let create ~dst ~riak_conn ~riak_bucket () =
+let fetch_objects t ids ~batch_size =
+  let rec fetch_batch () =
+    Pipe.read_at_most ids ~num_values:batch_size >>= function
+    | `Eof      -> return ()
+    | `Ok batch ->
+      Deferred.Queue.iter batch ~how:`Parallel ~f:(fetch_object t) >>= fun () ->
+      fetch_batch ()
+  in
+  fetch_batch ()
+
+let create ~dst ~riak_conn ~riak_bucket ~batch_size () =
   let t = {riak_conn; dst} in
   Log.info "Worker \"fetcher\": STARTED"                           >>= fun () ->
   Log.info (sprintf "Fetch BEGIN: keys of %s. Via 2i" riak_bucket) >>= fun () ->
   Riak.Object.ID.fetch_via_2i riak_conn ~bucket:riak_bucket        >>= fun ids ->
   let ids = Pipe.of_list ids in
   Log.info (sprintf "Fetch   END: keys of %s. Via 2i" riak_bucket) >>= fun () ->
-  Pipe.iter ids ~f:(fetch_object t)                                >>= fun () ->
+  fetch_objects t ids ~batch_size                                  >>= fun () ->
   Pipe.close dst;
   Log.info "Worker \"fetcher\": FINISHED"

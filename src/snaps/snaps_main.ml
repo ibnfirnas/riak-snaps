@@ -14,6 +14,7 @@ let main
     ~bucket
     ~commits_before_gc_minor
     ~commits_before_gc_major
+    ~batch_size
   =
   Log.init () >>= fun () ->
   Snaps_db.create
@@ -24,7 +25,7 @@ let main
   let riak_conn = Riak.Conn.make ~hostname ~port () in
   let r, w = Pipe.create () in
   let workers =
-    [ Snaps_worker_fetch.create ~dst:w ~riak_conn ~riak_bucket:bucket
+    [ Snaps_worker_fetch.create ~dst:w ~riak_conn ~riak_bucket:bucket ~batch_size
     ; Snaps_worker_store.create ~src:r ~db
     ]
   in
@@ -38,6 +39,7 @@ let () =
       let riak_port               = 8098
       let commits_before_gc_minor = 100
       let commits_before_gc_major = 500
+      let batch_size              = 25
     end
   in
   Command.async_basic
@@ -66,6 +68,9 @@ let () =
         "-commits-before-gc-major"
         (optional_with_default Default.commits_before_gc_major int)
         ~doc:(sprintf " How many commits to perform before pausing for major/aggressive GC? (default: %d)" Default.commits_before_gc_major)
+
+      +> flag "-batch-size" (optional_with_default Default.batch_size int)
+        ~doc:(sprintf " How many objects to fetch at a time? (default: %d)" Default.batch_size)
     )
     ( fun repo_path
           hostname
@@ -73,6 +78,7 @@ let () =
           bucket
           commits_before_gc_minor
           commits_before_gc_major
+          batch_size
           ()
       ->
         main
@@ -82,5 +88,6 @@ let () =
           ~bucket
           ~commits_before_gc_minor
           ~commits_before_gc_major
+          ~batch_size
     )
   |> Command.run
