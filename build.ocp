@@ -36,6 +36,7 @@ begin library "git"
         "core"
         "async"
         "async_shell"
+        "str"
     ]
     files    = [
         "src/git/git.mli"
