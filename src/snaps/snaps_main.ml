@@ -4,7 +4,7 @@ open Composition
 
 module Log = Snaps_log.Make (struct let name = "Snaps_main" end)
 
-let start ~workers =
+let run ~workers =
   Deferred.List.iter workers ~f:(fun w -> w ()) ~how:`Parallel
 
 let main
@@ -29,7 +29,7 @@ let main
     ; Snaps_worker_store.run ~r ~db
     ]
   in
-  start ~workers >>| fun () ->
+  run ~workers >>| fun () ->
   shutdown 0
 
 let () =
