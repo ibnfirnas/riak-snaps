@@ -20,7 +20,8 @@ let fetch_object {riak_conn; w} id =
   Writer.save path ~contents:data                                  >>= fun () ->
   Log.info (sprintf "Write   END: %S" path)                        >>= fun () ->
   Log.info (sprintf "Pipe.write BEGIN: %S" object_name)            >>= fun () ->
-  Pipe.write w info                                                >>= fun () ->
+  Pipe.write_without_pushback w info;
+  return ()                                                        >>= fun () ->
   Log.info (sprintf "Pipe.write   END: %S" object_name)            >>= fun () ->
   Log.info (sprintf "Fetch   END: %S" object_name)
 
