@@ -74,9 +74,10 @@ let put t obj_info =
   >>= fun () ->
   let p = path_to_data in
   Git.add ~filepath:p
-  >>= function
-    | Ok ()   -> return ()
-    | Error e -> handle_git_error t e
+  >>= ( function
+      | Ok ()   -> return ()
+      | Error e -> handle_git_error t e
+      )
   >>= fun () ->
   Git.status ~filepath:p >>= function
   | Git.Unchanged    -> Log.info (sprintf "Skip: %S. Known status: Unchanged" p)
@@ -86,9 +87,10 @@ let put t obj_info =
       Log.info (sprintf "Commit BEGIN: %S. Known status: Added" p)
       >>= fun () ->
       Git.commit ~msg:(sprintf "'Add %s'" p)
-      >>= function
-        | Ok ()   -> return ()
-        | Error e -> handle_git_error t e
+      >>= ( function
+          | Ok ()   -> return ()
+          | Error e -> handle_git_error t e
+          )
       >>= fun () ->
       Log.info (sprintf "Commit END: %S. Known status: Added" p)
       >>| fun () ->
@@ -100,9 +102,10 @@ let put t obj_info =
       Log.info (sprintf "Commit BEGIN: %S. Known status: Modified" p)
       >>= fun () ->
       Git.commit ~msg:(sprintf "'Update %s'" p)
-      >>= function
-        | Ok ()   -> return ()
-        | Error e -> handle_git_error t e
+      >>= ( function
+          | Ok ()   -> return ()
+          | Error e -> handle_git_error t e
+          )
       >>= fun () ->
       Log.info (sprintf "Commit END: %S. Known status: Modified" p)
       >>| fun () ->
