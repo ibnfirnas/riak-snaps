@@ -36,8 +36,7 @@ let main
     ; Snaps_work_store.run ~r ~db ~updates_channel:updates_w
     ]
   in
-  run ~workers >>| fun () ->
-  shutdown 0
+  run ~workers
 
 let () =
   let
