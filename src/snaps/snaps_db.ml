@@ -72,7 +72,8 @@ let put t obj_info =
   Git.add ~filepath:p
   >>= ( function
       | Ok ()   -> return ()
-      | Error e -> handle_git_error t e
+      | Error e -> handle_git_error t e >>= fun () ->
+                   Git.add_exn ~filepath:p
       )
   >>= fun () ->
   Git.status ~filepath:p
@@ -87,10 +88,12 @@ let put t obj_info =
     end
   | Git.Added -> begin
       Log.info (sprintf "Commit BEGIN: %S. Known status: Added" p) >>= fun () ->
-      Git.commit ~msg:(sprintf "'Add %s'" p)
+      let msg = sprintf "'Add %s'" p in
+      Git.commit ~msg
       >>= ( function
           | Ok ()   -> return ()
-          | Error e -> handle_git_error t e
+          | Error e -> handle_git_error t e >>= fun () ->
+                       Git.commit_exn ~msg
           )
       >>= fun () ->
       Log.info (sprintf "Commit END: %S. Known status: Added" p) >>= fun () ->
@@ -101,10 +104,12 @@ let put t obj_info =
   | Git.Modified -> begin
       Log.info (sprintf "Commit BEGIN: %S. Known status: Modified" p)
       >>= fun () ->
-      Git.commit ~msg:(sprintf "'Update %s'" p)
+      let msg = sprintf "'Update %s'" p in
+      Git.commit ~msg
       >>= ( function
           | Ok ()   -> return ()
-          | Error e -> handle_git_error t e
+          | Error e -> handle_git_error t e >>= fun () ->
+                       Git.commit_exn ~msg
           )
       >>= fun () ->
       Log.info (sprintf "Commit END: %S. Known status: Modified" p)
