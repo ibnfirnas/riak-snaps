@@ -3,8 +3,8 @@ open Async.Std
 
 module Log = Snaps_log.Make (struct let name = "Snaps_work_store" end)
 
-type t = { db     : Snaps_db.t
-         ; object_queue      : Snaps_object_info.t Pipe.Reader.t
+type t = { db              : Snaps_db.t
+         ; object_queue    : Snaps_object_info.t            Pipe.Reader.t
          ; updates_channel : Snaps_work_progress.update_msg Pipe.Writer.t
          }
 

@@ -21,8 +21,8 @@ let main
   Riak.Object.ID.fetch_via_2i riak_conn ~bucket:riak_bucket
   >>= fun riak_obj_ids ->
   Log.info (sprintf "Fetch END: keys of %s. Via 2i" riak_bucket) >>= fun () ->
-  let object_queue_r, object_queue_w = Pipe.create () in
-  let updates_r, updates_w = Pipe.create () in
+  let object_queue_r , object_queue_w = Pipe.create () in
+  let updates_r      , updates_w      = Pipe.create () in
   Snaps_db.create
     ~path:repo_path
     ~updates_channel:updates_w
@@ -31,9 +31,21 @@ let main
   >>= fun db ->
   let total_objects = List.length riak_obj_ids in
   let workers =
-    [ Snaps_work_progress.run ~total_objects ~updates_channel:updates_r
-    ; Snaps_work_fetch.run ~object_queue:object_queue_w ~riak_conn ~riak_obj_ids ~batch_size ~updates_channel:updates_w
-    ; Snaps_work_store.run ~object_queue:object_queue_r ~db ~updates_channel:updates_w
+    [ Snaps_work_progress.run
+        ~total_objects
+        ~updates_channel:updates_r
+
+    ; Snaps_work_fetch.run
+        ~object_queue:object_queue_w
+        ~riak_conn
+        ~riak_obj_ids
+        ~batch_size
+        ~updates_channel:updates_w
+
+    ; Snaps_work_store.run
+        ~object_queue:object_queue_r
+        ~db
+        ~updates_channel:updates_w
     ]
   in
   run ~workers

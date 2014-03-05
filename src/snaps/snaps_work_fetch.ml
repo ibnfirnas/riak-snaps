@@ -4,8 +4,8 @@ open Async.Std
 module Ash = Async_shell
 module Log = Snaps_log.Make (struct let name = "Snaps_work_fetch" end)
 
-type t = { riak_conn : Riak.Conn.t
-         ; object_queue         : Snaps_object_info.t Pipe.Writer.t
+type t = { riak_conn       : Riak.Conn.t
+         ; object_queue    : Snaps_object_info.t            Pipe.Writer.t
          ; updates_channel : Snaps_work_progress.update_msg Pipe.Writer.t
          }
 

@@ -93,8 +93,7 @@ let put t obj_info =
           | Error e -> handle_git_error t e
           )
       >>= fun () ->
-      Log.info (sprintf "Commit END: %S. Known status: Added" p)
-      >>= fun () ->
+      Log.info (sprintf "Commit END: %S. Known status: Added" p) >>= fun () ->
       incr t.commits_since_last_gc_minor;
       incr t.commits_since_last_gc_major;
       Pipe.write t.updates_channel `Committed
