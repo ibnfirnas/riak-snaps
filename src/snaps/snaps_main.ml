@@ -1,6 +1,5 @@
 open Core.Std
 open Async.Std
-open Composition
 
 module Log = Snaps_log.Make (struct let name = "Snaps_main" end)
 

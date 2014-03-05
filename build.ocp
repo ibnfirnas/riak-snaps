@@ -11,13 +11,6 @@ begin library "threads"
      byte +    = [ "-custom" ]
 end
 
-begin library "composition"
-    files    = [
-        "src/composition/composition.mli"
-        "src/composition/composition.ml"
-    ]
-end
-
 begin library "riak"
     requires = [
         "core"
@@ -52,7 +45,6 @@ begin program "snaps"
         "threads"
         "riak"
         "git"
-        "composition"
     ]
     files    = [
         "src/snaps/snaps_db.mli"
