@@ -38,11 +38,17 @@ let status ~filepath =
     | s                                    -> (Unexpected s)
   (* TODO: Handle other status codes. *)
 
+let add_exn ~filepath =
+  Async_shell.run "git" ["add"; filepath]
+
 let add ~filepath =
-  try_with_parse_stderr (fun () -> Async_shell.run "git" ["add"; filepath])
+  try_with_parse_stderr (fun () -> add_exn ~filepath)
+
+let commit_exn ~msg =
+  Async_shell.run "git" ["commit"; "-m"; msg]
 
 let commit ~msg =
-  try_with_parse_stderr (fun () -> Async_shell.run "git" ["commit"; "-m"; msg])
+  try_with_parse_stderr (fun () -> commit_exn ~msg)
 
 let gc ?(aggressive=false) () =
   let aggressive_flag = if aggressive then ["--aggressive"] else [] in

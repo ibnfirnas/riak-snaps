@@ -17,6 +17,10 @@ val add
   :  filepath:string
   -> (unit, error) Result.t Deferred.t
 
+val add_exn
+  :  filepath:string
+  -> unit Deferred.t
+
 val status
   :  filepath:string
   -> status Deferred.t
@@ -24,6 +28,10 @@ val status
 val commit
   :  msg:string
   -> (unit, error) Result.t Deferred.t
+
+val commit_exn
+  :  msg:string
+  -> unit Deferred.t
 
 val gc
   :  ?aggressive:bool
