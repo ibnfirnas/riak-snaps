@@ -21,11 +21,10 @@ let parse_stderr stderr =
   | Failure "hd" | Scanf.Scan_failure _ ->
     Unexpected_stderr stderr
 
-let add ~filepath =
+let try_with_parse_stderr ~f =
   let module P = Async_shell.Process in
-  let add = fun () -> Async_shell.run "git" ["add"; filepath] in
-  try_with ~extract_exn:true add >>| function
-  | Ok ()                       -> Ok ()
+  try_with ~extract_exn:true f >>| function
+  | Ok ok                       -> Ok ok
   | Error (P.Failed {P.stderr}) -> Error (parse_stderr stderr)
   | Error _                     -> assert false
 
@@ -37,13 +36,11 @@ let status ~filepath =
   | s                                    -> (Unexpected s)
   (* TODO: Handle other status codes. *)
 
+let add ~filepath =
+  try_with_parse_stderr (fun () -> Async_shell.run "git" ["add"; filepath])
+
 let commit ~msg =
-  let module P = Async_shell.Process in
-  let commit = fun () -> Async_shell.run "git" ["commit"; "-m"; msg] in
-  try_with ~extract_exn:true commit >>| function
-  | Ok ()                       -> Ok ()
-  | Error (P.Failed {P.stderr}) -> Error (parse_stderr stderr)
-  | Error _                     -> assert false
+  try_with_parse_stderr (fun () -> Async_shell.run "git" ["commit"; "-m"; msg])
 
 let gc ?(aggressive=false) () =
   let aggressive_flag = if aggressive then ["--aggressive"] else [] in
