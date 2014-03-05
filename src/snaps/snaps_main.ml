@@ -23,9 +23,13 @@ let main
     ~commits_before_gc_major
   >>= fun db ->
   let riak_conn = Riak.Conn.make ~hostname ~port () in
+  Log.info (sprintf "Fetch BEGIN: keys of %s. Via 2i" riak_bucket) >>= fun () ->
+  Riak.Object.ID.fetch_via_2i riak_conn ~bucket:riak_bucket
+  >>= fun riak_obj_ids ->
+  Log.info (sprintf "Fetch END: keys of %s. Via 2i" riak_bucket) >>= fun () ->
   let r, w = Pipe.create () in
   let workers =
-    [ Snaps_worker_fetch.run ~w ~riak_conn ~riak_bucket ~batch_size
+    [ Snaps_worker_fetch.run ~w ~riak_conn ~riak_obj_ids ~batch_size
     ; Snaps_worker_store.run ~r ~db
     ]
   in
