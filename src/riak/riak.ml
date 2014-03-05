@@ -35,7 +35,8 @@ module Object = struct
       }
 
     let fetch ~uri ~bucket =
-      IO.fetch ~uri >>| fun data ->
+      IO.fetch ~uri
+      >>| fun data ->
       let json = Ezjsonm.from_string data in
       let keys = Ezjsonm.(get_list get_string (find json ["keys"])) in
       List.map keys ~f:(fun key -> {bucket; key})

@@ -9,14 +9,15 @@ type t = { db     : Snaps_db.t
 
 let rec store t =
   let {r; db} = t in
-  Pipe.read r >>= function
-  | `Eof   ->
-    Snaps_db.gc_major db >>| fun () ->
-    Pipe.close_read r
+  Pipe.read r
+  >>= function
+    | `Eof   ->
+      Snaps_db.gc_major db >>| fun () ->
+      Pipe.close_read r
 
-  | `Ok object_info ->
-    Snaps_db.put db object_info >>= fun () ->
-    store t
+    | `Ok object_info ->
+      Snaps_db.put db object_info >>= fun () ->
+      store t
 
 let run ~r ~db () =
   Log.info "Worker STARTED" >>= fun () ->

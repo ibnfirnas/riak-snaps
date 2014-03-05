@@ -23,17 +23,19 @@ let parse_stderr stderr =
 
 let try_with_parse_stderr ~f =
   let module P = Async_shell.Process in
-  try_with ~extract_exn:true f >>| function
-  | Ok ok                       -> Ok ok
-  | Error (P.Failed {P.stderr}) -> Error (parse_stderr stderr)
-  | Error _                     -> assert false
+  try_with ~extract_exn:true f
+  >>| function
+    | Ok ok                       -> Ok ok
+    | Error (P.Failed {P.stderr}) -> Error (parse_stderr stderr)
+    | Error _                     -> assert false
 
 let status ~filepath =
-  Async_shell.run_full "git" ["status"; "--porcelain"; filepath] >>| function
-  | ""                                   -> Unchanged
-  | s when (s = "A  " ^ filepath ^ "\n") -> Added
-  | s when (s = "M  " ^ filepath ^ "\n") -> Modified
-  | s                                    -> (Unexpected s)
+  Async_shell.run_full "git" ["status"; "--porcelain"; filepath]
+  >>| function
+    | ""                                   -> Unchanged
+    | s when (s = "A  " ^ filepath ^ "\n") -> Added
+    | s when (s = "M  " ^ filepath ^ "\n") -> Modified
+    | s                                    -> (Unexpected s)
   (* TODO: Handle other status codes. *)
 
 let add ~filepath =

@@ -62,43 +62,50 @@ let handle_git_error {path} = function
       let msg = sprintf
         "Don't know what to do when Git cannot create this file: %S!" filepath
       in
-      Log.error msg >>= fun () ->
+      Log.error msg
+      >>= fun () ->
       assert false
 
 let put t obj_info =
   let path_to_data = Snaps_object_info.path_to_data obj_info in
-  Sys.chdir t.path                    >>= fun () ->
-  maybe_gc t                          >>= fun () ->
+  Sys.chdir t.path
+  >>= fun () ->
+  maybe_gc t
+  >>= fun () ->
   let p = path_to_data in
-  Git.add ~filepath:p                 >>= function
+  Git.add ~filepath:p
+  >>= function
     | Ok ()   -> return ()
     | Error e -> handle_git_error t e
   >>= fun () ->
   Git.status ~filepath:p >>= function
-  | Git.Added -> begin
-    Log.info (sprintf "Commit BEGIN: %S. Known status: Added" p) >>= fun () ->
-    Git.commit ~msg:(sprintf "'Add %s'" p)                       >>= function
-      | Ok ()   -> return ()
-      | Error e -> handle_git_error t e
-    >>= fun () ->
-    Log.info (sprintf "Commit END: %S. Known status: Added" p)   >>| fun () ->
-    incr t.commits_since_last_gc_minor;
-    incr t.commits_since_last_gc_major
-  end
-
-  | Git.Modified -> begin
-    Log.info (sprintf "Commit BEGIN: %S. Known status: Modified" p) >>= fun () ->
-    Git.commit ~msg:(sprintf "'Update %s'" p)                       >>= function
-      | Ok ()   -> return ()
-      | Error e -> handle_git_error t e
-    >>= fun () ->
-    Log.info (sprintf "Commit END: %S. Known status: Modified" p)   >>| fun () ->
-    incr t.commits_since_last_gc_minor;
-    incr t.commits_since_last_gc_major
-  end
-
-  | Git.Unchanged ->
-    Log.info (sprintf "Skip: %S. Known status: Unchanged" p)
-
-  | Git.Unexpected status ->
-    Log.info (sprintf "Skip: %S. Unknown status: %S" p status)
+  | Git.Unchanged    -> Log.info (sprintf "Skip: %S. Known status: Unchanged" p)
+  | Git.Unexpected s -> Log.info (sprintf "Skip: %S. Unknown status: %S" p s)
+  | Git.Added ->
+    begin
+      Log.info (sprintf "Commit BEGIN: %S. Known status: Added" p)
+      >>= fun () ->
+      Git.commit ~msg:(sprintf "'Add %s'" p)
+      >>= function
+        | Ok ()   -> return ()
+        | Error e -> handle_git_error t e
+      >>= fun () ->
+      Log.info (sprintf "Commit END: %S. Known status: Added" p)
+      >>| fun () ->
+      incr t.commits_since_last_gc_minor;
+      incr t.commits_since_last_gc_major
+    end
+  | Git.Modified ->
+    begin
+      Log.info (sprintf "Commit BEGIN: %S. Known status: Modified" p)
+      >>= fun () ->
+      Git.commit ~msg:(sprintf "'Update %s'" p)
+      >>= function
+        | Ok ()   -> return ()
+        | Error e -> handle_git_error t e
+      >>= fun () ->
+      Log.info (sprintf "Commit END: %S. Known status: Modified" p)
+      >>| fun () ->
+      incr t.commits_since_last_gc_minor;
+      incr t.commits_since_last_gc_major
+    end
