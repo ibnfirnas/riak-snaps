@@ -1,3 +1,6 @@
+open Core.Std
+open Async.Std
+
 type t
 
 val of_riak_obj : Riak.Object.t -> t
