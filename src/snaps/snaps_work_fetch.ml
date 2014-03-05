@@ -6,12 +6,13 @@ module Log = Snaps_log.Make (struct let name = "Snaps_work_fetch" end)
 
 type t = { riak_conn : Riak.Conn.t
          ; w         : Snaps_object_info.t Pipe.Writer.t
+         ; updates_channel : Snaps_work_progress.update_msg Pipe.Writer.t
          }
 
-let fetch_object {riak_conn; w} id =
+let fetch_object t id =
   let object_name = Riak.Object.ID.to_string id in
   Log.info (sprintf "Fetch BEGIN: %S" object_name) >>= fun () ->
-  Riak.Object.fetch riak_conn id
+  Riak.Object.fetch t.riak_conn id
   >>= fun obj ->
   let info = Snaps_object_info.of_riak_obj obj in
   let path = Snaps_object_info.path_to_data info in
@@ -20,9 +21,11 @@ let fetch_object {riak_conn; w} id =
   Ash.mkdir ~p:() (Filename.dirname path)   >>= fun () ->
   Writer.save path ~contents:data           >>= fun () ->
   Log.info (sprintf "Write END: %S" path)   >>= fun () ->
-  Pipe.write_without_pushback w info;
+  Pipe.write_without_pushback t.w info;
   return () >>= fun () ->
-  Log.info (sprintf "Fetch END: %S" object_name)
+  Log.info (sprintf "Fetch END: %S" object_name) >>= fun () ->
+  Pipe.write_without_pushback t.updates_channel `Fetched;
+  return ()
 
 let fetch_objects t ids ~batch_size =
   let rec fetch_batch () =
@@ -36,8 +39,8 @@ let fetch_objects t ids ~batch_size =
   in
   fetch_batch ()
 
-let run ~w ~riak_conn ~riak_obj_ids ~batch_size () =
-  let t = {riak_conn; w} in
+let run ~w ~riak_conn ~riak_obj_ids ~batch_size ~updates_channel () =
+  let t = {riak_conn; w; updates_channel} in
   Log.info "Worker STARTED" >>= fun () ->
   fetch_objects t (Pipe.of_list riak_obj_ids) ~batch_size >>= fun () ->
   Pipe.close w;

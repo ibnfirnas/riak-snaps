@@ -6,18 +6,20 @@ module Log = Snaps_log.Make (struct let name = "Snaps_db" end)
 
 type t =
   { path : string
+  ; updates_channel             : Snaps_work_progress.update_msg Pipe.Writer.t
   ; commits_before_gc_minor     : int
   ; commits_before_gc_major     : int
   ; commits_since_last_gc_minor : int ref
   ; commits_since_last_gc_major : int ref
   }
 
-let create ~path ~commits_before_gc_minor ~commits_before_gc_major =
+let create ~path ~updates_channel ~commits_before_gc_minor ~commits_before_gc_major =
   Ash.mkdir ~p:() path >>= fun () ->
   Sys.chdir path       >>= fun () ->
   Git.init ()          >>= fun () ->
   Sys.getcwd ()        >>| fun path ->  (* Remember the absolute path *)
   { path
+  ; updates_channel
   ; commits_before_gc_minor
   ; commits_before_gc_major
   ; commits_since_last_gc_minor = ref 0
@@ -75,8 +77,14 @@ let put t obj_info =
   >>= fun () ->
   Git.status ~filepath:p
   >>= begin function
-  | Git.Unchanged    -> Log.info (sprintf "Skip: %S. Known status: Unchanged" p)
-  | Git.Unexpected s -> Log.info (sprintf "Skip: %S. Unknown status: %S" p s)
+  | Git.Unexpected s -> begin
+      Log.info (sprintf "Skip: %S. Unknown status: %S" p s) >>= fun () ->
+      Pipe.write t.updates_channel `Skipped
+    end
+  | Git.Unchanged -> begin
+      Log.info (sprintf "Skip: %S. Known status: Unchanged" p) >>= fun () ->
+      Pipe.write t.updates_channel `Skipped
+    end
   | Git.Added -> begin
       Log.info (sprintf "Commit BEGIN: %S. Known status: Added" p) >>= fun () ->
       Git.commit ~msg:(sprintf "'Add %s'" p)
@@ -86,9 +94,10 @@ let put t obj_info =
           )
       >>= fun () ->
       Log.info (sprintf "Commit END: %S. Known status: Added" p)
-      >>| fun () ->
+      >>= fun () ->
       incr t.commits_since_last_gc_minor;
-      incr t.commits_since_last_gc_major
+      incr t.commits_since_last_gc_major;
+      Pipe.write t.updates_channel `Committed
     end
   | Git.Modified -> begin
       Log.info (sprintf "Commit BEGIN: %S. Known status: Modified" p)
@@ -100,8 +109,9 @@ let put t obj_info =
           )
       >>= fun () ->
       Log.info (sprintf "Commit END: %S. Known status: Modified" p)
-      >>| fun () ->
+      >>= fun () ->
       incr t.commits_since_last_gc_minor;
-      incr t.commits_since_last_gc_major
+      incr t.commits_since_last_gc_major;
+      Pipe.write t.updates_channel `Committed
     end
   end

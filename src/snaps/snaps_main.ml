@@ -16,20 +16,24 @@ let main
     ~batch_size
   =
   Log.init () >>= fun () ->
-  Snaps_db.create
-    ~path:repo_path
-    ~commits_before_gc_minor
-    ~commits_before_gc_major
-  >>= fun db ->
   let riak_conn = Riak.Conn.make ~hostname ~port () in
   Log.info (sprintf "Fetch BEGIN: keys of %s. Via 2i" riak_bucket) >>= fun () ->
   Riak.Object.ID.fetch_via_2i riak_conn ~bucket:riak_bucket
   >>= fun riak_obj_ids ->
   Log.info (sprintf "Fetch END: keys of %s. Via 2i" riak_bucket) >>= fun () ->
   let r, w = Pipe.create () in
+  let updates_r, updates_w = Pipe.create () in
+  Snaps_db.create
+    ~path:repo_path
+    ~updates_channel:updates_w
+    ~commits_before_gc_minor
+    ~commits_before_gc_major
+  >>= fun db ->
+  let total_objects = List.length riak_obj_ids in
   let workers =
-    [ Snaps_work_fetch.run ~w ~riak_conn ~riak_obj_ids ~batch_size
-    ; Snaps_work_store.run ~r ~db
+    [ Snaps_work_progress.run ~total_objects ~updates_channel:updates_r
+    ; Snaps_work_fetch.run ~w ~riak_conn ~riak_obj_ids ~batch_size ~updates_channel:updates_w
+    ; Snaps_work_store.run ~r ~db ~updates_channel:updates_w
     ]
   in
   run ~workers >>| fun () ->

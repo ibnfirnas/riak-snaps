@@ -57,6 +57,8 @@ begin program "snaps"
         "src/snaps/snaps_object_info.ml"
         "src/snaps/snaps_work_fetch.mli"
         "src/snaps/snaps_work_fetch.ml"
+        "src/snaps/snaps_work_progress.mli"
+        "src/snaps/snaps_work_progress.ml"
         "src/snaps/snaps_work_store.mli"
         "src/snaps/snaps_work_store.ml"
     ]
