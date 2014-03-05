@@ -28,8 +28,8 @@ let main
   Log.info (sprintf "Fetch END: keys of %s. Via 2i" riak_bucket) >>= fun () ->
   let r, w = Pipe.create () in
   let workers =
-    [ Snaps_worker_fetch.run ~w ~riak_conn ~riak_obj_ids ~batch_size
-    ; Snaps_worker_store.run ~r ~db
+    [ Snaps_work_fetch.run ~w ~riak_conn ~riak_obj_ids ~batch_size
+    ; Snaps_work_store.run ~r ~db
     ]
   in
   run ~workers >>| fun () ->

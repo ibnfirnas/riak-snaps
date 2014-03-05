@@ -1,7 +1,7 @@
 open Core.Std
 open Async.Std
 
-module Log = Snaps_log.Make (struct let name = "Snaps_worker_store" end)
+module Log = Snaps_log.Make (struct let name = "Snaps_work_store" end)
 
 type t = { db     : Snaps_db.t
          ; r      : Snaps_object_info.t Pipe.Reader.t
