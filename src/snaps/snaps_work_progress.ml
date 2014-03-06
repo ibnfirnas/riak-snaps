@@ -1,6 +1,26 @@
 open Core.Std
 open Async.Std
 
+module Term :sig
+  val clear : unit -> unit
+  (** Clear screen *)
+
+  val reset : unit -> unit
+  (** Reset cursor position *)
+end = struct
+  let ansi_code_clear =
+    "\027[2J"
+
+  let ansi_code_reset =
+    "\027[1;1H"
+
+  let clear () =
+    print_string ansi_code_clear
+
+  let reset () =
+    print_string ansi_code_reset
+end
+
 type update_msg  = [ `Fetched | `Committed | `Skipped ]
 
 type t =
@@ -18,6 +38,7 @@ let print t =
     ; sprintf "Skipped   : %d" t.skipped
     ]
   in
+  Term.reset ();
   print_endline (String.concat lines ~sep:"\n");
   return ()
 
@@ -51,4 +72,5 @@ let run ~total_objects ~updates_channel () =
     ; skipped   = 0
     }
   in
+  Term.clear ();
   read t ~updates_channel
