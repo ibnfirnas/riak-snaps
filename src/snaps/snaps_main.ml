@@ -15,7 +15,7 @@ let main
     ~commits_before_gc_major
     ~batch_size
   =
-  Snaps_log.init ();
+  Snaps_log.init ~level:`Info ~repo_path;
   let riak_conn = Riak.Conn.make ~hostname ~port () in
   Log.info (sprintf "Fetch BEGIN: keys of %s. Via 2i" riak_bucket) >>= fun () ->
   Riak.Object.ID.fetch_via_2i riak_conn ~bucket:riak_bucket

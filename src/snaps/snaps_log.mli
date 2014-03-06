@@ -10,4 +10,4 @@ module Make (Caller : CALLER) : sig
   val error : string -> unit Deferred.t
 end
 
-val init : unit -> unit
+val init : level:Log.Level.t -> repo_path:string -> unit
