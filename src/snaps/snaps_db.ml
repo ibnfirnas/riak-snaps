@@ -79,12 +79,12 @@ let put t obj_info =
   Git.status ~filepath:p
   >>= begin function
   | Git.Unexpected s -> begin
-      Log.info (sprintf "Skip: %S. Unknown status: %S" p s) >>= fun () ->
-      Pipe.write t.updates_channel `Skipped
+      Log.info (sprintf "Skip: %S. Unknown status: %S" p s) >>| fun () ->
+      Pipe.write_without_pushback t.updates_channel `Skipped
     end
   | Git.Unchanged -> begin
-      Log.info (sprintf "Skip: %S. Known status: Unchanged" p) >>= fun () ->
-      Pipe.write t.updates_channel `Skipped
+      Log.info (sprintf "Skip: %S. Known status: Unchanged" p) >>| fun () ->
+      Pipe.write_without_pushback t.updates_channel `Skipped
     end
   | Git.Added -> begin
       Log.info (sprintf "Commit BEGIN: %S. Known status: Added" p) >>= fun () ->
@@ -96,10 +96,10 @@ let put t obj_info =
                        Git.commit_exn ~msg
           )
       >>= fun () ->
-      Log.info (sprintf "Commit END: %S. Known status: Added" p) >>= fun () ->
+      Log.info (sprintf "Commit END: %S. Known status: Added" p) >>| fun () ->
       incr t.commits_since_last_gc_minor;
       incr t.commits_since_last_gc_major;
-      Pipe.write t.updates_channel `Committed
+      Pipe.write_without_pushback t.updates_channel `Committed
     end
   | Git.Modified -> begin
       Log.info (sprintf "Commit BEGIN: %S. Known status: Modified" p)
@@ -113,9 +113,9 @@ let put t obj_info =
           )
       >>= fun () ->
       Log.info (sprintf "Commit END: %S. Known status: Modified" p)
-      >>= fun () ->
+      >>| fun () ->
       incr t.commits_since_last_gc_minor;
       incr t.commits_since_last_gc_major;
-      Pipe.write t.updates_channel `Committed
+      Pipe.write_without_pushback t.updates_channel `Committed
     end
   end
