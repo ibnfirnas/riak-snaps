@@ -13,6 +13,38 @@ type t =
   ; commits_since_last_gc_major : int ref
   }
 
+let handle_git_error = function
+  | Git.Unexpected_stderr stderr -> begin
+      Log.error (sprintf "Git.Unexpected_stderr %S" stderr) >>= fun () ->
+      assert false
+    end
+  | Git.Unable_to_create_file filepath -> begin
+      Log.error (sprintf "Git.Unable_to_create_file %S" filepath) >>= fun () ->
+      Sys.getcwd () >>= fun path ->
+      if filepath = (Filename.concat path ".git/index.lock") then
+        Log.info (sprintf "Removing expected lockfile: %S" filepath)
+        >>= fun () ->
+        Sys.remove filepath
+      else
+        let msg = sprintf
+          "Don't know what to do when Git cannot create this file: %S!" filepath
+        in
+        Log.error msg >>= fun () ->
+        assert false
+    end
+
+let git_add_with_retry ~filepath =
+  Git.add ~filepath
+  >>= function
+    | Ok ()   -> return ()
+    | Error e -> handle_git_error e >>= fun () -> Git.add_exn ~filepath
+
+let git_commit_with_retry ~msg =
+  Git.commit ~msg
+  >>= function
+    | Ok ()   -> return ()
+    | Error e -> handle_git_error e >>= fun () -> Git.commit_exn ~msg
+
 let create ~path ~updates_channel ~commits_before_gc_minor ~commits_before_gc_major =
   Ash.mkdir ~p:() path >>= fun () ->
   Sys.chdir path       >>= fun () ->
@@ -60,35 +92,12 @@ let maybe_gc t =
        then gc_minor t
        else return ()
 
-let handle_git_error {path} = function
-  | Git.Unexpected_stderr stderr ->
-    Log.error (sprintf "Git.Unexpected_stderr %S" stderr) >>= fun () ->
-    assert false
-
-  | Git.Unable_to_create_file filepath ->
-    Log.error (sprintf "Git.Unable_to_create_file %S" filepath) >>= fun () ->
-    if filepath = (Filename.concat path ".git/index.lock") then
-      Log.info (sprintf "Removing expected lockfile: %S" filepath) >>= fun () ->
-      Sys.remove filepath
-    else
-      let msg = sprintf
-        "Don't know what to do when Git cannot create this file: %S!" filepath
-      in
-      Log.error msg >>= fun () ->
-      assert false
-
 let put t obj_info =
   let path_to_data = Snaps_object_info.path_to_data obj_info in
   Sys.chdir t.path >>= fun () ->
   maybe_gc t       >>= fun () ->
   let p = path_to_data in
-  Git.add ~filepath:p
-  >>= ( function
-      | Ok ()   -> return ()
-      | Error e -> handle_git_error t e >>= fun () ->
-                   Git.add_exn ~filepath:p
-      )
-  >>= fun () ->
+  git_add_with_retry ~filepath:p >>= fun () ->
   Git.status ~filepath:p
   >>= begin function
   | Git.Unexpected s -> begin
@@ -102,13 +111,7 @@ let put t obj_info =
   | Git.Added -> begin
       Log.info (sprintf "Commit BEGIN: %S. Known status: Added" p) >>= fun () ->
       let msg = sprintf "'Add %s'" p in
-      Git.commit ~msg
-      >>= ( function
-          | Ok ()   -> return ()
-          | Error e -> handle_git_error t e >>= fun () ->
-                       Git.commit_exn ~msg
-          )
-      >>= fun () ->
+      git_commit_with_retry ~msg >>= fun () ->
       Log.info (sprintf "Commit END: %S. Known status: Added" p) >>| fun () ->
       incr t.commits_since_last_gc_minor;
       incr t.commits_since_last_gc_major;
@@ -118,13 +121,7 @@ let put t obj_info =
       Log.info (sprintf "Commit BEGIN: %S. Known status: Modified" p)
       >>= fun () ->
       let msg = sprintf "'Update %s'" p in
-      Git.commit ~msg
-      >>= ( function
-          | Ok ()   -> return ()
-          | Error e -> handle_git_error t e >>= fun () ->
-                       Git.commit_exn ~msg
-          )
-      >>= fun () ->
+      git_commit_with_retry ~msg >>= fun () ->
       Log.info (sprintf "Commit END: %S. Known status: Modified" p)
       >>| fun () ->
       incr t.commits_since_last_gc_minor;
