@@ -53,7 +53,7 @@ let create ~path ~updates_channel ~commits_before_gc_minor ~commits_before_gc_ma
   let gitignore = ".gitignore" in
   Writer.save gitignore ~contents:"log/\n" >>= fun () ->
   let filepath = gitignore in
-  Git.add_exn ~filepath >>= fun () ->
+  git_add_with_retry ~filepath >>= fun () ->
   Git.status  ~filepath >>| begin function
     | Git.Unexpected _ -> assert false
     | Git.Unchanged    -> None
@@ -61,7 +61,7 @@ let create ~path ~updates_channel ~commits_before_gc_minor ~commits_before_gc_ma
     | Git.Modified     -> Some (sprintf "Update %s" filepath)
   end >>= begin function
     | None     -> return ()
-    | Some msg -> Git.commit_exn ~msg  (* TODO: Cleanup lock conflict and retry. *)
+    | Some msg -> git_commit_with_retry ~msg
   end >>| fun () ->
   { path
   ; updates_channel
