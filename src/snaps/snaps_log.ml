@@ -6,11 +6,6 @@ module type CALLER = sig
 end
 
 module Make (Caller : CALLER) = struct
-  let init () =
-    Log.Global.set_level `Info;
-    Log.Global.set_output [Log.Output.stderr ()];
-    return ()
-
   let info msg =
     Log.Global.info "| %s | %s" Caller.name msg;
     Log.Global.flushed ()
@@ -19,3 +14,7 @@ module Make (Caller : CALLER) = struct
     Log.Global.error "| %s | %s" Caller.name msg;
     Log.Global.flushed ()
 end
+
+let init () =
+  Log.Global.set_level `Info;
+  Log.Global.set_output [Log.Output.stderr ()]
