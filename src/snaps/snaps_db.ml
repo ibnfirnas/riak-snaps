@@ -17,7 +17,20 @@ let create ~path ~updates_channel ~commits_before_gc_minor ~commits_before_gc_ma
   Ash.mkdir ~p:() path >>= fun () ->
   Sys.chdir path       >>= fun () ->
   Git.init ()          >>= fun () ->
-  Sys.getcwd ()        >>| fun path ->  (* Remember the absolute path *)
+  Sys.getcwd ()        >>= fun path ->  (* Remember the absolute path *)
+  let gitignore = ".gitignore" in
+  Writer.save gitignore ~contents:"log/\n" >>= fun () ->
+  let filepath = gitignore in
+  Git.add_exn ~filepath >>= fun () ->
+  Git.status  ~filepath >>| begin function
+    | Git.Unexpected _ -> assert false
+    | Git.Unchanged    -> None
+    | Git.Added        -> Some (sprintf "Add %s"    filepath)
+    | Git.Modified     -> Some (sprintf "Update %s" filepath)
+  end >>= begin function
+    | None     -> return ()
+    | Some msg -> Git.commit_exn ~msg  (* TODO: Cleanup lock conflict and retry. *)
+  end >>| fun () ->
   { path
   ; updates_channel
   ; commits_before_gc_minor
