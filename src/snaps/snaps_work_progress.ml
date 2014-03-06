@@ -1,7 +1,7 @@
 open Core.Std
 open Async.Std
 
-module Term :sig
+module Term : sig
   val clear : unit -> unit
   (** Clear screen *)
 
