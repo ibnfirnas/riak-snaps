@@ -26,11 +26,10 @@ let absolute_of_path p =
   absolute
 
 let init ~level ~repo_path =
-  let (/) = Filename.concat in
   Shell.mkdir ~p:() repo_path;
   let repo_path = absolute_of_path repo_path in
-  let log_dir = repo_path / "log" in
+  let log_dir = repo_path ^/ "log" in
   Shell.mkdir ~p:() log_dir;
-  let filename = log_dir / "snaps.log" in
+  let filename = log_dir ^/ "snaps.log" in
   Log.Global.set_level level;
   Log.Global.set_output [Log.Output.file `Text ~filename]

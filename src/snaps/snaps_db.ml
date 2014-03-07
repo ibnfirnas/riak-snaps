@@ -21,7 +21,7 @@ let handle_git_error = function
   | Git.Unable_to_create_file filepath -> begin
       Log.error (sprintf "Git.Unable_to_create_file %S" filepath) >>= fun () ->
       Sys.getcwd () >>= fun path ->
-      if filepath = (Filename.concat path ".git/index.lock") then
+      if filepath = (path ^/ ".git/index.lock") then
         Log.info (sprintf "Removing expected lockfile: %S" filepath)
         >>= fun () ->
         Sys.remove filepath
