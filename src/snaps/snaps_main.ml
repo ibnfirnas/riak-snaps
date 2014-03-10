@@ -222,8 +222,8 @@ end = struct
   let spec =
     Command.group
       ~summary:"Snapshot Riak objects to a Git repository."
-      [ "full", full
-      ; "fetch", fetch
+      [ "full"  , full
+      ; "fetch" , fetch
       ]
 end
 
