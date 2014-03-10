@@ -46,7 +46,6 @@ let rec read t ~updates_channel =
   Pipe.read updates_channel
   >>= function
     | `Eof ->
-      Pipe.close_read updates_channel;
       return ()
 
     | `Ok `Fetched ->

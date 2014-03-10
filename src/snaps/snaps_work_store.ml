@@ -14,7 +14,6 @@ let rec store t =
   >>= function
     | `Eof -> begin
       Snaps_db.gc_major db >>| fun () ->
-      Pipe.close_read object_queue;
       Pipe.close updates_channel
     end
     | `Ok object_info -> begin
