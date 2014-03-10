@@ -63,7 +63,7 @@ let rec read t ~updates_channel =
       print t >>= fun () ->
       read t ~updates_channel
 
-let run ~total_objects ~updates_channel () =
+let run ~total_objects ~updates_channel =
   let t =
     { total     = total_objects
     ; fetched   = 0

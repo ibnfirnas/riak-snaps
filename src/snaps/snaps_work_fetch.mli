@@ -7,5 +7,4 @@ val run
   -> riak_obj_ids:Riak.Object.ID.t list
   -> batch_size:int
   -> updates_channel:Snaps_work_progress.update_msg Pipe.Writer.t
-  -> unit
   -> unit Deferred.t

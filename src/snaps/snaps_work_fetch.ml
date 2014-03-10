@@ -39,9 +39,8 @@ let fetch_objects t ids ~batch_size =
   in
   fetch_batch ()
 
-let run ~object_queue ~riak_conn ~riak_obj_ids ~batch_size ~updates_channel () =
+let run ~object_queue ~riak_conn ~riak_obj_ids ~batch_size ~updates_channel =
   let t = {riak_conn; object_queue; updates_channel} in
   Log.info "Worker STARTED" >>= fun () ->
   fetch_objects t (Pipe.of_list riak_obj_ids) ~batch_size >>= fun () ->
-  Pipe.close object_queue;
   Log.info "Worker FINISHED"

@@ -13,15 +13,14 @@ let rec store t =
   Pipe.read object_queue
   >>= function
     | `Eof -> begin
-      Snaps_db.gc_major db >>| fun () ->
-      Pipe.close updates_channel
+      Snaps_db.gc_major db
     end
     | `Ok object_info -> begin
       Snaps_db.put db object_info >>= fun () ->
       store t
     end
 
-let run ~object_queue ~db ~updates_channel () =
+let run ~object_queue ~db ~updates_channel =
   Log.info "Worker STARTED" >>= fun () ->
   let t = {object_queue; db; updates_channel} in
   store t >>= fun () ->

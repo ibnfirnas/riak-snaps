@@ -30,22 +30,34 @@ let main
     ~commits_before_gc_major
   >>= fun db ->
   let total_objects = List.length riak_obj_ids in
+
+  let worker_progress () =
+    Snaps_work_progress.run
+      ~total_objects
+      ~updates_channel:updates_r
+  in
+  let worker_fetcher () =
+    Snaps_work_fetch.run
+      ~object_queue:object_queue_w
+      ~riak_conn
+      ~riak_obj_ids
+      ~batch_size
+      ~updates_channel:updates_w
+    >>| fun () ->
+    Pipe.close object_queue_w;
+  in
+  let worker_storer () =
+    Snaps_work_store.run
+      ~object_queue:object_queue_r
+      ~db
+      ~updates_channel:updates_w
+    >>| fun () ->
+    Pipe.close updates_w
+  in
   let workers =
-    [ Snaps_work_progress.run
-        ~total_objects
-        ~updates_channel:updates_r
-
-    ; Snaps_work_fetch.run
-        ~object_queue:object_queue_w
-        ~riak_conn
-        ~riak_obj_ids
-        ~batch_size
-        ~updates_channel:updates_w
-
-    ; Snaps_work_store.run
-        ~object_queue:object_queue_r
-        ~db
-        ~updates_channel:updates_w
+    [ worker_progress
+    ; worker_fetcher
+    ; worker_storer
     ]
   in
   run ~workers
