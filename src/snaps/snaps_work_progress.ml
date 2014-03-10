@@ -46,7 +46,6 @@ let rec read t ~updates_channel =
   Pipe.read updates_channel
   >>= function
     | `Eof ->
-      Pipe.close_read updates_channel;
       return ()
 
     | `Ok `Fetched ->
@@ -64,7 +63,7 @@ let rec read t ~updates_channel =
       print t >>= fun () ->
       read t ~updates_channel
 
-let run ~total_objects ~updates_channel () =
+let run ~total_objects ~updates_channel =
   let t =
     { total     = total_objects
     ; fetched   = 0
