@@ -4,10 +4,11 @@ open Async.Std
 type t
 
 val create
-  :  path:string
+  :  ?commits_before_gc_minor:int
+  -> ?commits_before_gc_major:int
+  -> path:string
   -> updates_channel:Snaps_work_progress.update_msg Pipe.Writer.t
-  -> commits_before_gc_minor:int
-  -> commits_before_gc_major:int
+  -> unit
   -> t Deferred.t
 
 val put

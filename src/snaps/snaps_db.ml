@@ -45,7 +45,7 @@ let git_commit_with_retry ~msg =
     | Ok ()   -> return ()
     | Error e -> handle_git_error e >>= fun () -> Git.commit_exn ~msg
 
-let create ~path ~updates_channel ~commits_before_gc_minor ~commits_before_gc_major =
+let create ?(commits_before_gc_minor=100) ?(commits_before_gc_major=500) ~path ~updates_channel () =
   Ash.mkdir ~p:() path >>= fun () ->
   Sys.chdir path       >>= fun () ->
   Git.init ()          >>= fun () ->
