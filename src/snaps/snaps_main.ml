@@ -50,54 +50,77 @@ let main
   in
   run ~workers
 
-module UI = struct
-  module Default = struct
-    let riak_host               = "localhost"
-    let riak_port               = 8098
-    let commits_before_gc_minor = 100
-    let commits_before_gc_major = 500
-    let batch_size              = 25
+module UI : sig
+  val spec : Command.t
+end = struct
+  module Param = struct
+    open Command.Spec
+
+    module Default = struct
+      let riak_host               = "localhost"
+      let riak_port               = 8098
+      let commits_before_gc_minor = 100
+      let commits_before_gc_major = 500
+      let batch_size              = 25
+    end
+
+    let repo_path = empty +>
+      flag "-repo-path" (required string)
+      ~doc:" Path to directory in which to store data"
+
+    let host = empty +>
+      flag "-host" (optional_with_default Default.riak_host string)
+      ~doc:
+      ( " Riak hostname or IP address"
+      ^ sprintf "(default: %s)" Default.riak_host
+      )
+
+    let port = empty +>
+      flag "-port" (optional_with_default Default.riak_port int)
+      ~doc:(sprintf " Riak HTTP port (default: %d)" Default.riak_port)
+
+    let bucket = empty +>
+      flag "-bucket" (required string)
+      ~doc:" Riak bucket to take snapshots from"
+
+    let commits_before_gc_minor = empty +>
+      flag
+        "-commits-before-gc-minor"
+        (optional_with_default Default.commits_before_gc_minor int)
+        ~doc:
+        ( " How many commits to perform before pausing for minor/normal GC?"
+        ^ sprintf "(default: %d)" Default.commits_before_gc_minor
+        )
+
+    let commits_before_gc_major = empty +>
+      flag
+        "-commits-before-gc-major"
+        (optional_with_default Default.commits_before_gc_major int)
+        ~doc:
+        ( " How many commits to perform before pausing for major/aggressive GC?"
+        ^ sprintf "(default: %d)" Default.commits_before_gc_major
+        )
+
+    let batch_size = empty +>
+      flag "-batch-size" (optional_with_default Default.batch_size int)
+      ~doc:
+      ( " How many objects to fetch at a time?"
+      ^ sprintf "(default: %d)" Default.batch_size
+      )
   end
+
+  let (+) = Command.Spec.(++)
 
   let full =
     Command.async_basic
       ~summary:"Full run: fetch and commit."
-      Command.Spec.(
-        empty
-
-        +> flag "-repo-path" (required string)
-          ~doc:" Path to directory in which to store data"
-
-        +> flag "-host" (optional_with_default Default.riak_host string)
-          ~doc:(sprintf " Riak hostname or IP address (default: %s)" Default.riak_host)
-
-        +> flag "-port" (optional_with_default Default.riak_port int)
-          ~doc:(sprintf " Riak HTTP port (default: %d)" Default.riak_port)
-
-        +> flag "-bucket" (required string)
-          ~doc:" Riak bucket to take snapshots from"
-
-        +> flag
-          "-commits-before-gc-minor"
-          (optional_with_default Default.commits_before_gc_minor int)
-          ~doc:
-          ( " How many commits to perform before pausing for minor/normal GC?"
-          ^ sprintf "(default: %d)" Default.commits_before_gc_minor
-          )
-
-        +> flag
-          "-commits-before-gc-major"
-          (optional_with_default Default.commits_before_gc_major int)
-          ~doc:
-          ( " How many commits to perform before pausing for major/aggressive GC?"
-          ^ sprintf "(default: %d)" Default.commits_before_gc_major
-          )
-
-        +> flag "-batch-size" (optional_with_default Default.batch_size int)
-          ~doc:
-          ( " How many objects to fetch at a time?"
-          ^ sprintf "(default: %d)" Default.batch_size
-          )
+      ( Param.repo_path
+      + Param.host
+      + Param.port
+      + Param.bucket
+      + Param.commits_before_gc_minor
+      + Param.commits_before_gc_major
+      + Param.batch_size
       )
       ( fun repo_path
             hostname
