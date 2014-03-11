@@ -16,7 +16,7 @@ let rec store t =
       Snaps_db.gc_major db
     end
     | `Ok object_info -> begin
-      Snaps_db.put db object_info >>= fun () ->
+      Snaps_db.put_object db object_info >>= fun () ->
       store t
     end
 

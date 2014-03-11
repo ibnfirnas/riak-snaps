@@ -100,7 +100,7 @@ let maybe_gc t =
        then gc_minor t
        else return ()
 
-let put t obj_info =
+let put_object t obj_info =
   let path_to_data = Snaps_object_info.path_to_data obj_info in
   Sys.chdir t.path >>= fun () ->
   maybe_gc t       >>= fun () ->

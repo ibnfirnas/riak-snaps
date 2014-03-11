@@ -11,7 +11,7 @@ val create
   -> unit
   -> t Deferred.t
 
-val put
+val put_object
    : t
   -> Snaps_object_info.t
   -> unit Deferred.t
