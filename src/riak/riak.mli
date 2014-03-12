@@ -9,9 +9,10 @@ end
 
 module Object : sig
   module ID : sig
-    type t = { bucket : string
-             ; key    : string
-             }
+    type t = private
+      { bucket : string
+      ; key    : string
+      }
 
     val to_string : t -> string
 
@@ -26,9 +27,10 @@ module Object : sig
       -> (t list) Deferred.t
   end
 
-  type t = { id   : ID.t
-           ; data : string
-           }
+  type t = private
+    { id   : ID.t
+    ; data : string
+    }
 
   val fetch
      : Conn.t
