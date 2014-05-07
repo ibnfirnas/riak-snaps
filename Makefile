@@ -1,3 +1,4 @@
+PATH              := $(shell opam config var bin):$(PATH)
 PROGRAMS          := snaps
 DIR_BUILD         := _obuild
 MAX_BUILD_WORKERS := \
