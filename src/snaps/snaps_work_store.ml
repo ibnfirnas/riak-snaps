@@ -37,6 +37,6 @@ let run ~object_queue ~db ~updates_channel ~granularity =
     | `Bucket -> store_bucket
   in
   let t = {object_queue; db; updates_channel} in
-  store t >>= fun () ->
+  store t              >>= fun () ->
   Snaps_db.gc_major db >>= fun () ->
   Log.info "Worker FINISHED"

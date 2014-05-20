@@ -44,19 +44,24 @@ let list_group_by l ~f : ('k * ('v list)) list =
 
 let handle_git_error = function
   | Git.Unexpected_stderr stderr -> begin
-      Log.error (sprintf "Git.Unexpected_stderr %S" stderr) >>= fun () ->
+      Log.error (sprintf "Git.Unexpected_stderr %S" stderr)
+      >>= fun () ->
       assert false
     end
   | Git.Unable_to_create_file filepath -> begin
-      Log.error (sprintf "Git.Unable_to_create_file %S" filepath) >>= fun () ->
-      Sys.getcwd () >>= fun path ->
+      Log.error (sprintf "Git.Unable_to_create_file %S" filepath)
+      >>= fun () ->
+      Sys.getcwd ()
+      >>= fun path ->
       if filepath = (path ^/ ".git/index.lock") then
         Log.info (sprintf "Removing expected lockfile: %S" filepath)
         >>= fun () ->
         Sys.remove filepath
       else
-        let msg = sprintf
-          "Don't know what to do when Git cannot create this file: %S!" filepath
+        let msg =
+          sprintf
+            "Don't know what to do when Git cannot create this file: %S!"
+            filepath
         in
         Log.error msg >>= fun () ->
         assert false
@@ -177,18 +182,23 @@ let put_object t obj_info =
   >>= fun statuses ->
     begin match List.map statuses ~f:simple_git_status with
     | [Unexpected _] -> begin
-        Log.info (sprintf "Skip: %S. Unknown status." p) >>| fun () ->
+        Log.info (sprintf "Skip: %S. Unknown status." p)
+        >>| fun () ->
         Pipe.write_without_pushback t.updates_channel `Skipped
       end
     | [] -> begin
-        Log.info (sprintf "Skip: %S. Known status: Unchanged" p) >>| fun () ->
+        Log.info (sprintf "Skip: %S. Known status: Unchanged" p)
+        >>| fun () ->
         Pipe.write_without_pushback t.updates_channel `Skipped
       end
     | [Added] -> begin
-        Log.info (sprintf "Commit BEGIN: %S. Known status: Added" p) >>= fun () ->
+        Log.info (sprintf "Commit BEGIN: %S. Known status: Added" p)
+        >>= fun () ->
         let msg = sprintf "'Add %s'" p in
-        git_commit_with_retry ~msg >>= fun () ->
-        Log.info (sprintf "Commit END: %S. Known status: Added" p) >>| fun () ->
+        git_commit_with_retry ~msg
+        >>= fun () ->
+        Log.info (sprintf "Commit END: %S. Known status: Added" p)
+        >>| fun () ->
         incr t.commits_since_last_gc_minor;
         incr t.commits_since_last_gc_major;
         Pipe.write_without_pushback t.updates_channel `Committed
@@ -197,7 +207,8 @@ let put_object t obj_info =
         Log.info (sprintf "Commit BEGIN: %S. Known status: Modified" p)
         >>= fun () ->
         let msg = sprintf "'Update %s'" p in
-        git_commit_with_retry ~msg >>= fun () ->
+        git_commit_with_retry ~msg
+        >>= fun () ->
         Log.info (sprintf "Commit END: %S. Known status: Modified" p)
         >>| fun () ->
         incr t.commits_since_last_gc_minor;
