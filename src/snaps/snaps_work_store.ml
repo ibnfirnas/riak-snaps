@@ -12,9 +12,7 @@ let rec store_objects t =
   let {object_queue; db; updates_channel} = t in
   Pipe.read object_queue
   >>= function
-    | `Eof -> begin
-      Snaps_db.gc_major db
-    end
+    | `Eof            -> return ()
     | `Ok object_info -> begin
       Snaps_db.put_object db object_info >>= fun () ->
       store_objects t
@@ -29,8 +27,7 @@ let store_bucket t =
       Hash_set.add paths (Snaps_object_info.path_to_bucket obj)
   );
   let f = Snaps_db.put_directory db in
-  Deferred.List.iter (Hash_set.to_list paths) ~how:`Sequential ~f >>= fun () ->
-  Snaps_db.gc_major db
+  Deferred.List.iter (Hash_set.to_list paths) ~how:`Sequential ~f
 
 let run ~object_queue ~db ~updates_channel ~granularity =
   Log.info "Worker STARTED" >>= fun () ->
@@ -41,4 +38,5 @@ let run ~object_queue ~db ~updates_channel ~granularity =
   in
   let t = {object_queue; db; updates_channel} in
   store t >>= fun () ->
+  Snaps_db.gc_major db >>= fun () ->
   Log.info "Worker FINISHED"
