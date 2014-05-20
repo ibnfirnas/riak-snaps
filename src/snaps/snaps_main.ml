@@ -116,7 +116,7 @@ end = struct
       let commits_before_gc_minor = 100
       let commits_before_gc_major = 500
       let batch_size              = 25
-      let commit_granularity      = "object"
+      let commit_granularity      = "bucket"
     end
 
     let repo_path =
