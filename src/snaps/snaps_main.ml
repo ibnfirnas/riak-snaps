@@ -14,6 +14,7 @@ let main_full
     ~commits_before_gc_minor
     ~commits_before_gc_major
     ~batch_size
+    ~commit_granularity
   =
   Snaps_log.init ~level:`Info ~repo_path;
   let riak_conn = Riak.Conn.make ~hostname ~port () in
@@ -52,6 +53,7 @@ let main_full
       ~object_queue:object_queue_r
       ~db
       ~updates_channel:updates_w
+      ~granularity:commit_granularity
     >>| fun () ->
     Pipe.close updates_w
   in
@@ -114,6 +116,7 @@ end = struct
       let commits_before_gc_minor = 100
       let commits_before_gc_major = 500
       let batch_size              = 25
+      let commit_granularity      = "object"
     end
 
     let repo_path =
@@ -159,6 +162,15 @@ end = struct
       ( " How many objects to fetch at a time?"
       ^ sprintf "(default: %d)" Default.batch_size
       )
+
+    let commit_granularity =
+      flag
+        "-commit-granularity"
+        (optional_with_default Default.commit_granularity string)
+        ~doc:
+        ( " How often to commit? Per [bucket | object]? "
+        ^ sprintf "(default: %s)" Default.commit_granularity
+        )
   end
 
   let full =
@@ -173,6 +185,7 @@ end = struct
       + Flag.commits_before_gc_minor
       + Flag.commits_before_gc_major
       + Flag.batch_size
+      + Flag.commit_granularity
       )
       ( fun repo_path
             hostname
@@ -181,8 +194,16 @@ end = struct
             commits_before_gc_minor
             commits_before_gc_major
             batch_size
+            commit_granularity
             ()
         ->
+          let commit_granularity =
+            match commit_granularity with
+            | "bucket" -> `Bucket
+            | "object" -> `Object
+            | other    ->
+                failwith (sprintf "Unknown commit granularity: %S\n" other)
+          in
           main_full
             ~repo_path
             ~hostname
@@ -191,6 +212,7 @@ end = struct
             ~commits_before_gc_minor
             ~commits_before_gc_major
             ~batch_size
+            ~commit_granularity
       )
 
   let fetch =

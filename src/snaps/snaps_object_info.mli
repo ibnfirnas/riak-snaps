@@ -7,3 +7,6 @@ val of_riak_obj : Riak.Object.t -> t
 
 val path_to_data : t -> string
 (** Path to file containing data for the object. *)
+
+val path_to_bucket : t -> string
+(** Path to directory containing the object data file. *)
