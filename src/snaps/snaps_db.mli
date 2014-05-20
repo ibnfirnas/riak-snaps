@@ -16,6 +16,11 @@ val put_object
   -> Snaps_object_info.t
   -> unit Deferred.t
 
+val put_directory
+   : t
+  -> string
+  -> unit Deferred.t
+
 val gc_minor : t -> unit Deferred.t
 
 val gc_major : t -> unit Deferred.t

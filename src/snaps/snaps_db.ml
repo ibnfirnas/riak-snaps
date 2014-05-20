@@ -19,6 +19,7 @@ type simple_git_status =
   | Unchanged
   | Unexpected of Git_status.t
 
+
 let simple_git_status s =
   let module GS  = Git_status in
   let module GSC = Git_status_code in
@@ -28,6 +29,18 @@ let simple_git_status s =
   | GS.Normal (GSC.Unmodified , _, _) -> Unchanged
   | GS.Normal _
   | GS.Rename _                       -> Unexpected s
+
+let list_group_by l ~f : ('k * ('v list)) list =
+  List.fold_left l ~init:[] ~f:(
+    fun groups value ->
+      let key = f value in
+      let group =
+        match List.Assoc.find groups key with
+        | Some values -> value :: values
+        | None        -> [value]
+      in
+      List.Assoc.add groups key group
+  )
 
 let handle_git_error = function
   | Git.Unexpected_stderr stderr -> begin
@@ -114,6 +127,45 @@ let maybe_gc t =
   else if !(t.commits_since_last_gc_minor) >= t.commits_before_gc_minor
        then gc_minor t
        else return ()
+
+let put_directory t filepath =
+  let update_committed () =
+    Pipe.write_without_pushback t.updates_channel `Committed
+  in
+  Sys.chdir t.path                       >>= fun () ->
+  git_add_with_retry ~filepath           >>= fun () ->
+  Git.status ~filepath                   >>= fun statuses ->
+  let statuses =
+    list_group_by (List.map statuses ~f:simple_git_status) ~f:(
+      function
+      | Added        -> `A
+      | Modified     -> `M
+      (* TODO: Decide how to handle these: *)
+      | Unexpected _ -> assert false
+      | Unchanged    -> assert false
+    )
+  in
+  match statuses with
+  | [] -> begin
+      Log.info (sprintf "Skip: %s. 0 added/modified files." filepath)
+    end
+  | statuses -> begin
+      Deferred.List.iter statuses ~how:`Sequential ~f:(
+        let len = List.length in
+        function
+        | `A, statuses-> Log.info (sprintf    "Added %d files." (len statuses))
+        | `M, statuses-> Log.info (sprintf "Modified %d files." (len statuses))
+      )
+      >>= fun () ->
+      Log.info (sprintf "Commit BEGIN: %S." filepath)             >>= fun () ->
+      git_commit_with_retry ~msg:(sprintf "'Update %s'" filepath) >>= fun () ->
+      return
+        ( incr t.commits_since_last_gc_minor
+        ; incr t.commits_since_last_gc_major
+        )                                                         >>= fun () ->
+      Log.info (sprintf "Commit End: %S." filepath)               >>| fun () ->
+      List.iter statuses ~f:(fun _ -> update_committed ())
+    end
 
 let put_object t obj_info =
   let path_to_data = Snaps_object_info.path_to_data obj_info in
