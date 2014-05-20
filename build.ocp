@@ -34,6 +34,14 @@ begin library "git"
     files    = [
         "src/git/git.mli"
         "src/git/git.ml"
+        "src/git/git_status.mli"
+        "src/git/git_status.ml"
+        "src/git/git_status_code.mli"
+        "src/git/git_status_code.ml"
+        "src/git/git_status_lexer.mli"
+        "src/git/git_status_lexer.mll"
+        "src/git/git_status_parser.mli"
+        "src/git/git_status_parser.ml"
     ]
 end
 

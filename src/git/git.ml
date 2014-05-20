@@ -1,6 +1,7 @@
 open Core.Std
 open Async.Std
 
+
 type status = Unchanged
             | Added
             | Modified
@@ -8,6 +9,7 @@ type status = Unchanged
 
 type error = Unable_to_create_file of string
            | Unexpected_stderr     of string
+
 
 let init () =
   Async_shell.run "git" ["init"]
@@ -31,12 +33,8 @@ let try_with_parse_stderr ~f =
 
 let status ~filepath =
   Async_shell.run_full "git" ["status"; "--porcelain"; filepath]
-  >>| function
-    | ""                                   -> Unchanged
-    | s when (s = "A  " ^ filepath ^ "\n") -> Added
-    | s when (s = "M  " ^ filepath ^ "\n") -> Modified
-    | s                                    -> (Unexpected s)
-  (* TODO: Handle other status codes. *)
+  >>| fun output ->
+  Git_status_parser.parse output
 
 let add_exn ~filepath =
   Async_shell.run "git" ["add"; filepath]

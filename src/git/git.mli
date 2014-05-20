@@ -1,11 +1,6 @@
 open Core.Std
 open Async.Std
 
-type status = Unchanged
-            | Added
-            | Modified
-            | Unexpected of string
-
 type error = Unable_to_create_file of string
            | Unexpected_stderr     of string
 
@@ -23,7 +18,7 @@ val add_exn
 
 val status
   :  filepath:string
-  -> status Deferred.t
+  -> Git_status.t list Deferred.t
 
 val commit
   :  msg:string
