@@ -173,10 +173,10 @@ let put_directory t filepath =
     end
 
 let put_object t obj_info =
-  let path_to_data = Snaps_object_info.path_to_data obj_info in
+  let data_path = Snaps_object_info.to_data_path obj_info in
   Sys.chdir t.path >>= fun () ->
   maybe_gc t       >>= fun () ->
-  let p = path_to_data in
+  let p = data_path in
   git_add_with_retry ~filepath:p >>= fun () ->
   Git.status ~filepath:p
   >>= fun statuses ->

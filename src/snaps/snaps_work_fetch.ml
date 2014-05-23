@@ -15,7 +15,7 @@ let fetch_object t id =
   Riak.Object.fetch t.riak_conn id
   >>= fun obj ->
   let info = Snaps_object_info.of_riak_obj obj in
-  let path = Snaps_object_info.path_to_data info in
+  let path = Snaps_object_info.to_data_path info in
   let data = obj.Riak.Object.data in
   Log.info (sprintf "Write BEGIN: %S" path) >>= fun () ->
   Ash.mkdir ~p:() (Filename.dirname path)   >>= fun () ->

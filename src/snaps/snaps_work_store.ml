@@ -24,7 +24,7 @@ let store_bucket t =
   let paths = String.Hash_set.create () in
   Queue.iter object_queue ~f:(
     fun obj ->
-      Hash_set.add paths (Snaps_object_info.path_to_bucket obj)
+      Hash_set.add paths (Snaps_object_info.to_bucket_path obj)
   );
   let f = Snaps_db.put_directory db in
   Deferred.List.iter (Hash_set.to_list paths) ~how:`Sequential ~f
