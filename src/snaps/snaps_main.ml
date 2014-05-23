@@ -46,7 +46,7 @@ let main_full
       ~batch_size
       ~updates_channel:updates_w
     >>| fun () ->
-    Pipe.close object_queue_w;
+    Pipe.close object_queue_w
   in
   let worker_storer () =
     Snaps_work_store.run
