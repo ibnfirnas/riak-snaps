@@ -1,0 +1,46 @@
+# vim: filetype=yaml:tabstop=2:softtabstop=2:shiftwidth=2:
+
+OASISFormat : 0.4
+Name        : snaps
+Version     : 1.0.0
+Synopsis    : Automation of (Riak) object backup into a Git repository.
+Authors     : Siraaj Khandkar <siraaj@khandkar.net>
+License     : MIT
+Plugins     : META (0.4)
+            , DevFiles (0.4)
+
+Executable snaps
+  Path           : src/snaps
+  BuildTools     : ocamlbuild
+  MainIs         : snaps_main.ml
+  CompiledObject : native
+  builddepends   : threads
+                 , core
+                 , async
+                 , async_shell
+                 , git
+                 , riak
+
+Library git
+  Path            : src/git
+  BuildTools      : ocamlbuild
+  Modules         : Git
+  InternalModules : Git_status
+                  , Git_status_code
+                  , Git_status_lexer
+                  , Git_status_parser
+  builddepends    : threads
+                  , core
+                  , async
+                  , async_shell
+                  , str
+
+Library riak
+  Path         : src/riak
+  BuildTools   : ocamlbuild
+  Modules      : Riak
+  builddepends : threads
+               , core
+               , async
+               , async_shell
+               , ezjsonm

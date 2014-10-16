@@ -1,53 +1,72 @@
-PATH              := $(shell opam config var bin):$(PATH)
-PROGRAMS          := snaps
-DIR_BUILD         := _obuild
-MAX_BUILD_WORKERS := \
-	$(shell nproc             2> /dev/null \
-	     || gnproc            2> /dev/null \
-	     || sysctl -n hw.ncpu 2> /dev/null \
-	 )
+OASIS_GENERATED_FILES :=  \
+	_tags \
+	configure \
+	setup.data \
+	setup.log \
+	setup.ml \
+	src/git/META \
+	src/git/git.mldylib \
+	src/git/git.mllib \
+	src/riak/META \
+	src/riak/riak.mldylib \
+	src/riak/riak.mllib
 
+default: oasis_setup build
 
-.PHONY:\
-	build \
-	clean \
-	deps \
-	programs \
-	purge
+oasis_setup:
+	@oasis setup
 
-
-programs: build bin
-	@for p in $(PROGRAMS); do \
-		src="$(DIR_BUILD)/$$p/$$p.asm" ; \
-		dst="bin/$$p" ; \
-		cp $$src $$dst ; \
+oasis_clean:
+	@for file in $(OASIS_GENERATED_FILES); do \
+		rm $$file || true; \
 	done
 
 deps:
-	@opam install --yes ezjsonm ocp-build core async async_shell
+	@opam install --yes \
+		oasis \
+		core \
+		async \
+		async_shell \
+		ezjsonm
 
-bin:
-	@mkdir -p bin
+# OASIS_START
+# DO NOT EDIT (digest: a3c674b4239234cbbe53afe090018954)
 
-build: ocp-build.root
-	@ocp-build build -njobs $(MAX_BUILD_WORKERS)
+SETUP = ocaml setup.ml
 
-ocp-build.root:
-	@ocp-build -init -njobs $(MAX_BUILD_WORKERS)
+build: setup.data
+	$(SETUP) -build $(BUILDFLAGS)
 
-clean: clean_bin
-	@ocp-build clean
-	@rm -f ocp-build.root*
+doc: setup.data build
+	$(SETUP) -doc $(DOCFLAGS)
 
-clean_manually: clean_bin
-	@rm -rf $(DIR_BUILD)
-	@find \
-		. \
-			-name '*.o' \
-		-or -name '*.cmi' \
-		-or -name '*.cmo' \
-		-or -name '*.cmx' \
-	| xargs rm -f
+test: setup.data build
+	$(SETUP) -test $(TESTFLAGS)
 
-clean_bin:
-	@rm -rf bin
+all:
+	$(SETUP) -all $(ALLFLAGS)
+
+install: setup.data
+	$(SETUP) -install $(INSTALLFLAGS)
+
+uninstall: setup.data
+	$(SETUP) -uninstall $(UNINSTALLFLAGS)
+
+reinstall: setup.data
+	$(SETUP) -reinstall $(REINSTALLFLAGS)
+
+clean:
+	$(SETUP) -clean $(CLEANFLAGS)
+
+distclean:
+	$(SETUP) -distclean $(DISTCLEANFLAGS)
+
+setup.data:
+	$(SETUP) -configure $(CONFIGUREFLAGS)
+
+configure:
+	$(SETUP) -configure $(CONFIGUREFLAGS)
+
+.PHONY: build doc test all install uninstall reinstall clean distclean configure
+
+# OASIS_STOP
