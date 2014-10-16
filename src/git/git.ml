@@ -2,11 +2,6 @@ open Core.Std
 open Async.Std
 
 
-type status = Unchanged
-            | Added
-            | Modified
-            | Unexpected of string
-
 type error = Unable_to_create_file of string
            | Unexpected_stderr     of string
 
@@ -23,12 +18,12 @@ let parse_stderr stderr =
   | Failure "hd" | Scanf.Scan_failure _ ->
     Unexpected_stderr stderr
 
-let try_with_parse_stderr ~f =
+let try_with_parse_stderr f =
   let module P = Async_shell.Process in
   try_with ~extract_exn:true f
   >>| function
     | Ok ok                       -> Ok ok
-    | Error (P.Failed {P.stderr}) -> Error (parse_stderr stderr)
+    | Error (P.Failed {P.stderr; _}) -> Error (parse_stderr stderr)
     | Error _                     -> assert false
 
 let status ~filepath =

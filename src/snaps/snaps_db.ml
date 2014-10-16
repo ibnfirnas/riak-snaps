@@ -27,7 +27,11 @@ let simple_git_status s =
   | GS.Normal (GSC.Added      , _, _) -> Added
   | GS.Normal (GSC.Modified   , _, _) -> Modified
   | GS.Normal (GSC.Unmodified , _, _) -> Unchanged
-  | GS.Normal _
+  | GS.Normal (GSC.Untracked  , _, _)
+  | GS.Normal (GSC.Deleted    , _, _)
+  | GS.Normal (GSC.Renamed    , _, _)
+  | GS.Normal (GSC.Copied     , _, _)
+  | GS.Normal (GSC.Updated_unmerged , _, _)
   | GS.Rename _                       -> Unexpected s
 
 let list_group_by l ~f : ('k * ('v list)) list =
@@ -97,11 +101,15 @@ let create
   Git.status         ~filepath
   >>= fun statuses ->
     begin match List.map statuses ~f:simple_git_status with
-    | []          -> return ()
-    | [Unchanged] -> return ()
-    | [Added]     -> git_commit_with_retry ~msg:(sprintf "Add %s"    filepath)
-    | [Modified]  -> git_commit_with_retry ~msg:(sprintf "Update %s" filepath)
-    | _           -> assert false
+    | []       -> return ()
+    | [status] ->
+      begin match status with
+      | Unchanged -> return ()
+      | Added     -> git_commit_with_retry ~msg:(sprintf "Add %s"    filepath)
+      | Modified  -> git_commit_with_retry ~msg:(sprintf "Update %s" filepath)
+      | Unexpected _ -> assert false
+      end
+    | _        -> assert false
     end
   >>| fun () ->
   { path
@@ -181,39 +189,44 @@ let put_object t obj_info =
   Git.status ~filepath:p
   >>= fun statuses ->
     begin match List.map statuses ~f:simple_git_status with
-    | [Unexpected _] -> begin
-        Log.info (sprintf "Skip: %S. Unknown status." p)
-        >>| fun () ->
-        Pipe.write_without_pushback t.updates_channel `Skipped
-      end
     | [] -> begin
         Log.info (sprintf "Skip: %S. Known status: Unchanged" p)
         >>| fun () ->
         Pipe.write_without_pushback t.updates_channel `Skipped
       end
-    | [Added] -> begin
-        Log.info (sprintf "Commit BEGIN: %S. Known status: Added" p)
-        >>= fun () ->
-        let msg = sprintf "'Add %s'" p in
-        git_commit_with_retry ~msg
-        >>= fun () ->
-        Log.info (sprintf "Commit END: %S. Known status: Added" p)
-        >>| fun () ->
-        incr t.commits_since_last_gc_minor;
-        incr t.commits_since_last_gc_major;
-        Pipe.write_without_pushback t.updates_channel `Committed
-      end
-    | [Modified] -> begin
-        Log.info (sprintf "Commit BEGIN: %S. Known status: Modified" p)
-        >>= fun () ->
-        let msg = sprintf "'Update %s'" p in
-        git_commit_with_retry ~msg
-        >>= fun () ->
-        Log.info (sprintf "Commit END: %S. Known status: Modified" p)
-        >>| fun () ->
-        incr t.commits_since_last_gc_minor;
-        incr t.commits_since_last_gc_major;
-        Pipe.write_without_pushback t.updates_channel `Committed
+    | [status] ->
+      begin match status with
+      | Unchanged ->
+          assert false
+      | Unexpected _ -> begin
+          Log.info (sprintf "Skip: %S. Unknown status." p)
+          >>| fun () ->
+          Pipe.write_without_pushback t.updates_channel `Skipped
+        end
+      | Added -> begin
+          Log.info (sprintf "Commit BEGIN: %S. Known status: Added" p)
+          >>= fun () ->
+          let msg = sprintf "'Add %s'" p in
+          git_commit_with_retry ~msg
+          >>= fun () ->
+          Log.info (sprintf "Commit END: %S. Known status: Added" p)
+          >>| fun () ->
+          incr t.commits_since_last_gc_minor;
+          incr t.commits_since_last_gc_major;
+          Pipe.write_without_pushback t.updates_channel `Committed
+        end
+      | Modified -> begin
+          Log.info (sprintf "Commit BEGIN: %S. Known status: Modified" p)
+          >>= fun () ->
+          let msg = sprintf "'Update %s'" p in
+          git_commit_with_retry ~msg
+          >>= fun () ->
+          Log.info (sprintf "Commit END: %S. Known status: Modified" p)
+          >>| fun () ->
+          incr t.commits_since_last_gc_minor;
+          incr t.commits_since_last_gc_major;
+          Pipe.write_without_pushback t.updates_channel `Committed
+        end
       end
     | _ ->
         (* TODO: Consider returning Result.t instead of assertion. *)
