@@ -15,8 +15,8 @@ let of_riak_obj ro =
   ; bucket_path = "objects" / bucket
   }
 
-let to_data_path {data_path} =
+let to_data_path {data_path; _} =
   data_path
 
-let to_bucket_path {bucket_path} =
+let to_bucket_path {bucket_path; _} =
   bucket_path

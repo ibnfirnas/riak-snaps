@@ -9,7 +9,7 @@ type t = { db              : Snaps_db.t
          }
 
 let rec store_objects t =
-  let {object_queue; db; updates_channel} = t in
+  let {object_queue; db; _} = t in
   Pipe.read object_queue
   >>= function
     | `Eof            -> return ()
@@ -19,7 +19,7 @@ let rec store_objects t =
     end
 
 let store_bucket t =
-  let {object_queue; db; updates_channel} = t in
+  let {object_queue; db; _} = t in
   Pipe.read_all object_queue >>= fun object_queue ->
   let paths = String.Hash_set.create () in
   Queue.iter object_queue ~f:(

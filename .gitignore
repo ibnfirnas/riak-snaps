@@ -1,4 +1,14 @@
-_obuild/
-bin/
+*.native
+_build/
+_tags
 data/
-ocp-build.root*
+configure
+setup.data
+setup.log
+setup.ml
+src/git/META
+src/git/git.mldylib
+src/git/git.mllib
+src/riak/META
+src/riak/riak.mldylib
+src/riak/riak.mllib
